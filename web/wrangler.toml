@@ -4,7 +4,7 @@ main = ".svelte-kit/cloudflare/_worker.js"
 account_id = "9aee291c8fc8a03f6dacc66454177c60"
 
 [build]
-command = "bun run build"
+command = "bun x vite build"
 
 [assets]
 directory = ".svelte-kit/cloudflare/assets"
