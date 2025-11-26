@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "6e05d806-66f5-43d6-bdf1-7296f1f4f1e8",
+  "id": "b1b9a803-88da-4025-8bf2-ec0b5e92baee",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "game_authors": {
@@ -23,13 +23,6 @@
         },
         "display_name": {
           "name": "display_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "visibility": {
-          "name": "visibility",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -83,6 +76,27 @@
         "version": {
           "name": "version",
           "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "github_author": {
+          "name": "github_author",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "github_repo": {
+          "name": "github_repo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "owner_rc_id": {
+          "name": "owner_rc_id",
+          "type": "numeric",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false

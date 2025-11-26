@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1764138561631,
-      "tag": "0000_daffy_madripoor",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1764184349487,
-      "tag": "0001_robust_chat",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1764185286585,
-      "tag": "0002_parallel_thunderball",
+      "when": 1764189964906,
+      "tag": "0000_powerful_blazing_skull",
       "breakpoints": true
     }
   ]
