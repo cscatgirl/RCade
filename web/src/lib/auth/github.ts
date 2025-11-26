@@ -24,46 +24,23 @@ const GithubOIDCClaims = z.object({
     nbf: z.number(),
 });
 
-
-const JWK = z.object({
-    kty: z.string().nonempty(),
-    use: z.string().nonempty(),
-    kid: z.string().nonempty(),
-    alg: z.string().nonempty(),
-    n: z.string(),
-    e: z.string(),
-    x5c: z.array(z.string()),
-    x5t: z.string(),
-});
-
-type JWK =z.Infer<typeof JWK>
-
-const JWKResponse = z.object({
-    keys: z.array(JWK),
-});
+type GithubOIDCClaims = z.infer<typeof GithubOIDCClaims>;
 
 export class GithubOIDCValidator {
-    private keys: JWK[]; 
+    private rc_pat: string;
+    private jwks: ReturnType<typeof jose.createRemoteJWKSet>; 
 
-    private constructor(keys: JWK[]) {
-        this.keys = keys;
+    public constructor(rc_pat: string) {
+        this.rc_pat = rc_pat;
+        this.jwks = jose.createRemoteJWKSet(new URL(GITHUB_OIDC_JWKS_URI));
     }
 
-    public static async new(extra_keys: JWK[] = []): Promise<GithubOIDCValidator> {
-        const res = await fetch(GITHUB_OIDC_JWKS_URI);
-
-        if (!res.ok) {
-            throw new Error(`failed to fetch JWKS: ${res.status}`);
-        }
-        const body = await res.json();
-  
-        const { keys } = JWKResponse.parse(body);
-
-        return new GithubOIDCValidator(keys.concat(extra_keys));
-    };
-
-    public async validate(token: string): Promise<boolean> {
-        // TODO: validate token
-        return Promise.reject(false);
+public async validate(jwt: string): Promise<GithubOIDCClaims> {
+        const { payload } = await jose.jwtVerify(jwt, this.jwks, {
+            issuer: GITHUB_OIDC_ISSUER,
+            // TODO more validation
+        });
+        
+        return GithubOIDCClaims.parse(payload);
     }
 }
