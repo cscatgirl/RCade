@@ -9,7 +9,7 @@ export const games = sqliteTable('games', {
     version: text("version").notNull(),
     github_author: text("github_author").notNull(),
     github_repo: text("github_repo").notNull(),
-    owner_rc_Id: numeric("owner_rc_id").notNull(),
+    owner_rc_id: numeric("owner_rc_id").notNull(),
 });
 
 export const gameAuthors = sqliteTable('game_authors', {
