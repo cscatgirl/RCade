@@ -15,9 +15,8 @@ export const games = sqliteTable('games', {
 export const gameAuthors = sqliteTable('game_authors', {
     gameId: text("game_id").notNull().references(() => games.id),
     recurse_id: integer("recurse_id"),
-    display_name: text("display_name"),
-    visibility: text("visibility", { enum: ["public", "private", "personal"] }).notNull(),
-}); // references games
+    display_name: text("display_name").notNull(),
+});
 
 export const gamesRelations = relations(games, ({ many }) => ({
     authors: many(gameAuthors),
