@@ -94,7 +94,7 @@ export class Game {
 
         const upload_url = await getSignedUrl(
             S3,
-            new PutObjectCommand({ Bucket: "rcade", Key: `games/builds/${this.data.id}/${manifest.version}.tar.gz` }),
+            new PutObjectCommand({ Bucket: "rcade", Key: `games/builds/${this.data.id}/${version}.tar.gz` }),
             { expiresIn: 3600 }
         );
 
