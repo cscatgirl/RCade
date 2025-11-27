@@ -27,13 +27,12 @@ export class RCadeDeployClient {
       `${RECURSE_BASE_URL}/deployments/${manifest.name}`,
       JSON.stringify(manifest)
     );
+    const body = await res.readBody();
     if (res.message.statusCode !== 200) {
       throw new Error(
-        `Failed to create deployment intent: ${res.message.statusCode} ${res.message.statusMessage}`
+        `Failed to create deployment intent: ${res.message.statusCode} ${res.message.statusMessage} - ${body}`
       );
     }
-
-    const body = await res.readBody();
     const deploymentIntent = DeploymentIntent.parse(JSON.parse(body));
 
     // Mark the presigned URL as a secret to prevent it from appearing in logs
