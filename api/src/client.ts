@@ -1,4 +1,5 @@
-import { Game } from "./game";
+import { Game } from "./game/index.js";
+import { GamesResponse, GameResponse } from "./schema.js";
 
 export class Client {
     public static new() {
@@ -20,11 +21,11 @@ export class Client {
         return this
     }
 
-    public async getAllGames() {
+    public async getAllGames(): Promise<Game[]> {
         const response = await fetch(`${this.baseUrl}/games`);
-        const list = await response.json();
+        const list = GamesResponse.parse(await response.json());
 
-        return list.map((g: unknown) => Game.fromApiResponse(g))
+        return list.map((g) => Game.fromApiResponse(g))
     }
 
     public async getGame(gameId: string) {

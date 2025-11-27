@@ -8,6 +8,12 @@ export const VersionsSchema = z.object({
 
 export type Versions = z.infer<typeof VersionsSchema>;
 
+export interface GameInfo {
+  id: string;
+  name: string;
+  latestVersion: string;
+}
+
 export interface RcadeAPI {
-  getVersions: () => Promise<Versions>;
+  getGames: () => Promise<GameInfo[]>;
 }

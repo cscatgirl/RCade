@@ -1,5 +1,5 @@
 import semver from "semver";
-import { GameVersion } from "./version";
+import { GameVersion } from "./version.js";
 
 export class Game {
     public static fromApiResponse(response: any) {

@@ -1,0 +1,34 @@
+import { z } from "zod";
+
+export const GameAuthorResponse = z.object({
+  display_name: z.string(),
+  recurse_id: z.number().nullable().optional(),
+});
+
+export const GameVersionResponse = z.object({
+  displayName: z.string().nullable().optional(),
+  description: z.string(),
+  visibility: z.enum(["public", "private", "personal"]),
+  version: z.string(),
+  authors: z.array(GameAuthorResponse),
+  contents: z.object({
+    url: z.string(),
+    expires: z.number(),
+  }).optional(),
+});
+
+export const GameResponse = z.object({
+  id: z.string(),
+  name: z.string(),
+  git: z.object({
+    ssh: z.string(),
+    https: z.string(),
+  }),
+  owner_rc_id: z.string(),
+  versions: z.array(GameVersionResponse),
+});
+
+export const GamesResponse = z.array(GameResponse);
+
+export type GameResponse = z.infer<typeof GameResponse>;
+export type GamesResponse = z.infer<typeof GamesResponse>;

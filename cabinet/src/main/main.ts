@@ -1,16 +1,22 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { Client, Game } from '@rcade/api';
+import type { GameInfo } from '../shared/types';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isDev = !app.isPackaged;
 
+const apiClient = Client.new();
+
+const fullscreen = !isDev;
+
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
-    fullscreen: true,
+    fullscreen: fullscreen,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
     },
@@ -24,11 +30,14 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  ipcMain.handle('get-versions', () => ({
-    node: process.versions.node,
-    chrome: process.versions.chrome,
-    electron: process.versions.electron,
-  }));
+  ipcMain.handle('get-games', async (): Promise<GameInfo[]> => {
+    const games = await apiClient.getAllGames();
+    return games.map((game: Game) => ({
+      id: game.id(),
+      name: game.name(),
+      latestVersion: game.latest().version(),
+    }));
+  });
 
   createWindow();
 

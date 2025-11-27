@@ -1,19 +1,16 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { getRoute } from './router.svelte';
+  import CarouselPage from './pages/CarouselPage.svelte';
+  import GamePage from './pages/GamePage.svelte';
 
-  let versions = $state({ electron: '', chrome: '', node: '' });
-
-  onMount(async () => {
-    if (window.rcade) {
-      versions = await window.rcade.getVersions();
-    }
-  });
+  const route = $derived(getRoute());
 </script>
 
-<div class="container">
-  <h1>rcade client</h1>
-  <p class="info">Electron {versions.electron} | Chrome {versions.chrome} | Node {versions.node}</p>
-</div>
+{#if route.page === 'carousel'}
+  <CarouselPage />
+{:else if route.page === 'game'}
+  <GamePage game={route.game} />
+{/if}
 
 <style>
   :global(*) {
@@ -23,8 +20,9 @@
   }
 
   :global(body) {
-    background: #1a1a2e;
-    color: #eee;
+    background: #0a0a14;
+    color: #fff;
     min-height: 100vh;
+    font-family: system-ui, -apple-system, sans-serif;
   }
 </style>

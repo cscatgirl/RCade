@@ -1,7 +1,20 @@
 {
   "name": "@rcade/api",
   "module": "index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "type": "module",
+  "exports": {
+    ".": {
+      "bun": "./index.ts",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepare": "tsc -p tsconfig.build.json"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/semver": "^7.7.1"
