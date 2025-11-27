@@ -7,7 +7,8 @@
     "cli",
     "create",
     "action-deploy",
-    "api"
+    "api",
+    "runtime"
   ],
   "scripts": {
     "dev:web": "bun run --cwd web dev",
