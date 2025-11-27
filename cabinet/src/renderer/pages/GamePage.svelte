@@ -32,22 +32,29 @@
     }
   }
 
-  async function handleKeydown(event: KeyboardEvent) {
-    if (event.code === 'ShiftLeft') {
-      if (window.rcade) {
-        await window.rcade.unloadGame(game.id, game.latestVersion);
-      }
-      navigateToCarousel();
+  async function handleMenuKey() {
+    if (window.rcade) {
+      await window.rcade.unloadGame(game.id, game.latestVersion);
     }
+    navigateToCarousel();
   }
 
+  // focus the iframe on load, to ensure keyboard events are propogated to game
+  function init(element: HTMLElement) {
+    element.focus()
+  }
+
+  let unsubscribeMenuKey: (() => void) | undefined;
+
   onMount(() => {
-    window.addEventListener('keydown', handleKeydown);
+    if (window.rcade) {
+      unsubscribeMenuKey = window.rcade.onMenuKey(handleMenuKey);
+    }
     loadGame();
   });
 
   onDestroy(() => {
-    window.removeEventListener('keydown', handleKeydown);
+    unsubscribeMenuKey?.();
   });
 </script>
 
@@ -67,7 +74,7 @@
     <p class="hint">Press Menu to return</p>
   </div>
 {:else if gameUrl}
-  <iframe class="game-frame" src={gameUrl} title={game.name}></iframe>
+  <iframe use:init class="game-frame" src={gameUrl} title={game.name}></iframe>
 {/if}
 
 <style>

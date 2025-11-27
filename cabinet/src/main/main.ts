@@ -15,6 +15,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isDev = !app.isPackaged;
 
+// Hide cursor on Linux
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('cursor', 'none');
+}
+
 const apiClient = Client.new();
 
 // Cache directory for game files
@@ -136,6 +141,13 @@ function createWindow(): void {
       nodeIntegration: false,
       webSecurity: false, // Allow loading localhost game servers in iframes
     },
+  });
+
+  // Capture ShiftLeft even when iframe has focus
+  mainWindow.webContents.on('before-input-event', (_event, input) => {
+    if (input.type === 'keyDown' && input.code === 'ShiftLeft') {
+      mainWindow.webContents.send('menu-key-pressed');
+    }
   });
 
   if (isDev) {

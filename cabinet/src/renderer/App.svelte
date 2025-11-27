@@ -29,6 +29,9 @@
     background: #0a0a14;
     color: #fff;
     font-family: system-ui, -apple-system, sans-serif;
-    cursor: none;
+  }
+
+  :global(*) {
+    cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='), none !important;
   }
 </style>
