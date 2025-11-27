@@ -13,7 +13,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
         const header = request.headers.get("Authorization");
 
         if (header != undefined && header.startsWith("Bearer ")) {
-            token = header.slice(0, 7);
+            token = header.slice(7);
         }
 
         if (token == undefined) {

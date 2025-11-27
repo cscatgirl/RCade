@@ -5,10 +5,8 @@ export const RecurseResponse = z.object({
     first_name: z.string(),
     last_name: z.string(),
     name: z.string(),
-    name_hl: z.string(),
     email: z.string(),
     github: z.string(),
-    employer_role: z.string(),
     // TODO
 });
 

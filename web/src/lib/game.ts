@@ -8,6 +8,7 @@ import type { R2Bucket } from "@cloudflare/workers-types";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { env } from "$env/dynamic/private";
+import type { RecurseResponse } from "./rc_oauth";
 
 export enum GitUrlKind {
     Https,
@@ -40,14 +41,14 @@ export class Game {
         return new Game(v);
     }
 
-    public static async new(name: string, pushInfo: GithubOIDCClaims): Promise<Game> {
+    public static async new(name: string, pushInfo: GithubOIDCClaims & { recurser: RecurseResponse }): Promise<Game> {
         const result = await getDb().insert(games).values({
-            name: name,
+            name,
 
             github_author: pushInfo.repository_owner,
             github_repo: pushInfo.repository,
 
-            owner_rc_id: "0", // TODO
+            owner_rc_id: pushInfo.recurser.id.toString(), // TODO
         }).returning();
 
         return new Game({
@@ -85,10 +86,10 @@ export class Game {
                 endpoint: env.BUCKET_S3_ENDPOINT!,
                 credentials: {
                     accessKeyId: env.BUCKET_ACCESS_KEY!,
-                    secretAccessKey: env.BUCKET_ACECSS_KEY_SECRET!,
+                    secretAccessKey: env.BUCKET_ACCESS_KEY_SECRET!,
                 },
             }),
-            new PutObjectCommand({ Bucket: "rcade", Key: `/games/builds/${manifest.version}.tar.gz` }),
+            new PutObjectCommand({ Bucket: "rcade", Key: `games/builds/${this.data.id}/${manifest.version}.tar.gz` }),
             { expiresIn: 3600 }
         );
 

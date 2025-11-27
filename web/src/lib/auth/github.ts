@@ -46,10 +46,18 @@ export class GithubOIDCValidator {
     }
 
     public async validate(jwt: string): Promise<GithubOIDCClaims & { recurser: RecurseResponse }> {
-        const { payload } = await jose.jwtVerify(jwt, this.jwks, {
-            issuer: GITHUB_OIDC_ISSUER,
-            // TODO more validation?
-        });
+        let payload;
+
+        if ("DEBUG_DISABLE_DEPLOYMENT_VALIDATION" in env && env.DEBUG_DISABLE_DEPLOYMENT_VALIDATION == "true") {
+            payload = JSON.parse(atob(jwt.split(".")[1]));
+        } else {
+            const res = await jose.jwtVerify(jwt, this.jwks, {
+                issuer: GITHUB_OIDC_ISSUER,
+                // TODO more validation?
+            });
+
+            payload = res.payload;
+        }
 
         const claims = GithubOIDCClaims.parse(payload);
         const recurser = await this.rcClient.getUserByGithubId(claims.repository_owner);

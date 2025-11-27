@@ -8,7 +8,7 @@ const GetProfilesResponse = z.array(RecurseResponse);
 
 export class RecurseAPI {
     private pat: string;
-    
+
     public constructor(pat: string) {
         this.pat = pat;
     }
@@ -22,8 +22,8 @@ export class RecurseAPI {
         if (!res.ok) {
             throw new Error(`Failed to fetch user by github id: ${res.statusText}`);
         }
-        const body = res.json();
-        
+        const body = await res.json();
+
         const profiles = GetProfilesResponse.parse(body).filter((profile) => profile.github === githubId);
         if (profiles.length === 0) {
             throw new Error(`No user found with github id: ${githubId}`);
