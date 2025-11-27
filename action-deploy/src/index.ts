@@ -3,6 +3,7 @@ import { Manifest } from "@rcade/api";
 import * as fs from "fs";
 import * as tar from "tar";
 import { resolve, basename, dirname, join } from 'path';
+import { RCadeDeployClient } from "./api-client";
 
 const TOKEN_AUDIENCE = "https://rcade.recurse.com";
 
@@ -62,6 +63,11 @@ export async function run(): Promise<void> {
     core.info(`✅ Created: ${outputFile}`);
     core.endGroup();
 
+    core.startGroup("🔥 Creating Deployment Intent");
+    const client = new RCadeDeployClient(idToken);
+    const intent = await client.createDeploymentIntent(manifest);
+    core.info(`✅ Created deployment intent: ${intent.upload_url}`);
+    core.endGroup();
 
   } catch (error) {
     // Fail the workflow run if an error occurs
