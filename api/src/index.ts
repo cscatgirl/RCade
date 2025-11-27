@@ -1,0 +1,1 @@
+export { Manifest, ManifestAuthor } from "./manifest"

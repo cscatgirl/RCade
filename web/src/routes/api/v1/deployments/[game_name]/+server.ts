@@ -2,7 +2,7 @@ import { GithubOIDCValidator } from "$lib/auth/github";
 import { getDb } from "$lib/db";
 import { games } from "$lib/db/schema";
 import { Game } from "$lib/game";
-import { Manifest } from "$lib/manifest";
+import { Manifest } from "@rcade/api";
 import type { RequestHandler } from "@sveltejs/kit";
 
 const VALIDATOR = new GithubOIDCValidator();

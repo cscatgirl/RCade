@@ -3,7 +3,7 @@ import { getDb } from "./db";
 import { gameAuthors, games, gameVersions } from "./db/schema";
 import type { GithubOIDCClaims } from "./auth/github";
 import * as z from "zod";
-import { Manifest } from "./manifest";
+import { Manifest } from "@rcade/api";
 import type { R2Bucket } from "@cloudflare/workers-types";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
