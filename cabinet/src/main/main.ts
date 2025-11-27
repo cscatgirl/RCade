@@ -15,6 +15,7 @@ import { rcadeInputClassic } from '../plugins/rcade-input-classic';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isDev = !app.isPackaged;
+const scaleFactor = parseFloat(process.env.RCADE_SCALE_FACTOR || (isDev ? '2' : '1'));
 
 // Hide cursor on Linux
 if (process.platform === 'linux') {
@@ -137,8 +138,8 @@ function createWindow(): void {
   const mainWindow = new BrowserWindow({
     fullscreen: fullscreen,
     ...(isDev && {
-      width: 336 * 2,
-      height: 262 * 2,
+      width: 336 * scaleFactor,
+      height: 262 * scaleFactor,
       useContentSize: true,
       resizable: false,
     }),
@@ -157,10 +158,11 @@ function createWindow(): void {
     }
   });
 
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.setZoomFactor(scaleFactor);
+  });
+
   if (isDev) {
-    mainWindow.webContents.on('did-finish-load', () => {
-      mainWindow.webContents.setZoomFactor(2);
-    });
     mainWindow.loadURL('http://localhost:5173');
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
