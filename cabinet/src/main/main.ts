@@ -136,6 +136,12 @@ const fullscreen = !isDev;
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
     fullscreen: fullscreen,
+    ...(isDev && {
+      width: 336 * 2,
+      height: 262 * 2,
+      useContentSize: true,
+      resizable: false,
+    }),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -152,6 +158,9 @@ function createWindow(): void {
   });
 
   if (isDev) {
+    mainWindow.webContents.on('did-finish-load', () => {
+      mainWindow.webContents.setZoomFactor(2);
+    });
     mainWindow.loadURL('http://localhost:5173');
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
