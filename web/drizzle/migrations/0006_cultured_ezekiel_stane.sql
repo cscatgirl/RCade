@@ -1,0 +1,1 @@
+ALTER TABLE `game_versions` ADD `display_name` text;
