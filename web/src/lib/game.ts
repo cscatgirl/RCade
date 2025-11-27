@@ -98,8 +98,8 @@ export class Game {
 
     public gitUrl(kind: GitUrlKind = GitUrlKind.Https) {
         switch (kind) {
-            case GitUrlKind.Https: `https://github.com/${this.data.github_author}/${this.data.github_repo}`
-            case GitUrlKind.Ssh: `git@github.com:${this.data.github_author}/${this.data.github_repo}.git`
+            case GitUrlKind.Https: return `https://github.com/${this.data.github_repo}`
+            case GitUrlKind.Ssh: return `git@github.com:${this.data.github_repo}.git`
         }
     }
 
@@ -113,7 +113,8 @@ export class Game {
             return {
                 description: version.description,
                 visibility: version.visibility,
-                authors: version.authors,
+                version: version.version,
+                authors: version.authors.map(v => ({ display_name: v.display_name, recurse_id: v.recurse_id })),
             }
         });
 

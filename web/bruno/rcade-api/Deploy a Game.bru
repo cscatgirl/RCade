@@ -6,12 +6,24 @@ meta {
 
 post {
   url: {{protocol}}://{{host}}{{api_base}}/deployments/{{game_name}}
-  body: none
+  body: json
   auth: bearer
 }
 
 auth:bearer {
   token: Bearer X
+}
+
+body:json {
+  {
+    "name": "DEMO",
+    "description": "A Demo Deployment",
+    "visibility": "public",
+    "version": "1.0.0",
+    "authors": {
+      "display_name": "Rose Kodsi-Hall"
+    }
+  }
 }
 
 vars:pre-request {
@@ -22,7 +34,6 @@ vars:pre-request {
 
 script:pre-request {
   const crypto = require('crypto');
-  
   // JWT Configuration
   const payload = {
     "jti": "example-id",
@@ -31,8 +42,8 @@ script:pre-request {
     "aud": "https://github.com/octo-org",
     "ref": "refs/heads/main",
     "sha": "example-sha",
-    "repository": `${bru.getVar("github_user")}/${bru.getVar("github_repo")}`,
-    "repository_owner": `${bru.getVar("github_user")}`,
+    "repository": `${bru.getRequestVar("github_user")}/${bru.getRequestVar("github_repo")}`,
+    "repository_owner": `${bru.getRequestVar("github_user")}`,
     "actor_id": "12",
     "repository_visibility": "private",
     "repository_id": "74",
