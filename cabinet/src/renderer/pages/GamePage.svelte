@@ -39,11 +39,6 @@
     navigateToCarousel();
   }
 
-  // focus the iframe on load, to ensure keyboard events are propogated to game
-  function init(element: HTMLElement) {
-    element.focus()
-  }
-
   let unsubscribeMenuKey: (() => void) | undefined;
 
   onMount(() => {
@@ -56,6 +51,12 @@
   onDestroy(() => {
     unsubscribeMenuKey?.();
   });
+
+  let frame: HTMLIFrameElement | undefined = $state(undefined);
+
+  setInterval(() => {
+    frame?.focus();
+  }, 100);
 </script>
 
 {#if loading}
@@ -74,7 +75,7 @@
     <p class="hint">Press Menu to return</p>
   </div>
 {:else if gameUrl}
-  <iframe use:init class="game-frame" src={gameUrl} title={game.name}></iframe>
+  <iframe bind:this={frame} class="game-frame" src={gameUrl} title={game.name}></iframe>
 {/if}
 
 <style>
