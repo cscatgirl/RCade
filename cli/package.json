@@ -32,7 +32,6 @@
     "fdir": "^6.5.0",
     "js-yaml": "^4.1.1",
     "mustache": "^4.2.0",
-    "rcade": "workspace:*",
     "terminal-kit": "^3.1.2"
   }
 }

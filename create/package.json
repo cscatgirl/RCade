@@ -16,9 +16,11 @@
   "scripts": {
     "build": "bun build index.ts --outdir dist --target node"
   },
-  "devDependencies": {
-    "@types/bun": "latest",
+  "dependencies": {
     "rcade": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"

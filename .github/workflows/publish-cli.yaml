@@ -118,4 +118,8 @@ jobs:
 
       - name: Publish
         working-directory: ${{ matrix.directory }}
-        run: npm publish --provenance --access public
+        run: |
+          # Use bun pm pack to create tarball (transforms workspace:* to real versions)
+          bun pm pack
+          tarball=$(ls *.tgz)
+          npm publish "$tarball" --provenance --access public
