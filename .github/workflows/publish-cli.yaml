@@ -1,0 +1,102 @@
+name: Publish CLIs
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  bump:
+    name: Bump versions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump versions
+        id: bump
+        run: |
+          # Bump rcade first to get new version
+          cd cli
+          OLD_VERSION=$(bun -e "console.log(require('./package.json').version)")
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$OLD_VERSION"
+          case "${{ inputs.version_type }}" in
+            major) NEW_VERSION="$((MAJOR + 1)).0.0" ;;
+            minor) NEW_VERSION="${MAJOR}.$((MINOR + 1)).0" ;;
+            patch) NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))" ;;
+          esac
+          bun pkg set version "$NEW_VERSION"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          cd ..
+
+          # Apply same version to create-rcade
+          cd create
+          bun pkg set version "$NEW_VERSION"
+
+      - name: Commit and tag
+        run: |
+          git add cli/package.json create/package.json
+          git commit -m "chore: bump cli versions to ${{ steps.bump.outputs.new_version }}"
+          git tag "cli-v${{ steps.bump.outputs.new_version }}"
+          git push
+          git push origin "cli-v${{ steps.bump.outputs.new_version }}"
+
+  publish:
+    name: Publish ${{ matrix.package }}
+    needs: bump
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        include:
+          - package: rcade
+            directory: cli
+          - package: create-rcade
+            directory: create
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: cli-v${{ needs.bump.outputs.new_version }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: bun install
+
+      - name: Build
+        working-directory: ${{ matrix.directory }}
+        run: bun run build
+
+      - name: Publish
+        working-directory: ${{ matrix.directory }}
+        run: bun publish --access public --provenance
