@@ -2,6 +2,7 @@ import { input, select, confirm } from "@inquirer/prompts";
 import { fdir } from "fdir";
 import mustache from "mustache";
 import fs from "node:fs";
+import os from "node:os";
 import path, { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
@@ -9,6 +10,16 @@ import Mustache from "mustache";
 import { mkdir } from "node:fs/promises";
 import { write_workflow } from "./workflow";
 import { execa } from "execa";
+
+function expandTilde(filePath: string): string {
+    if (filePath.startsWith("~/")) {
+        return path.join(os.homedir(), filePath.slice(2));
+    }
+    if (filePath === "~") {
+        return os.homedir();
+    }
+    return filePath;
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
