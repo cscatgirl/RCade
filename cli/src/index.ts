@@ -1,4 +1,4 @@
-import enquirer from "enquirer";
+import { input, select, confirm } from "@inquirer/prompts";
 import { fdir } from "fdir";
 import mustache from "mustache";
 import fs from "node:fs";
@@ -32,9 +32,7 @@ function getTemplatesDir(): string {
 }
 
 export async function main() {
-    const { name } = <{ name: string }>await enquirer.prompt({
-        type: 'input',
-        name: 'name',
+    const name = await input({
         message: 'Enter game identifier (e.g. my-game):',
         required: true,
         validate: (value) => {
@@ -48,65 +46,52 @@ export async function main() {
         }
     });
 
-    const { display_name } = <{ display_name: string }>await enquirer.prompt({
-        type: 'input',
-        name: 'display_name',
-        initial: name,
+    const display_name = await input({
         message: 'Enter display name (My Game):',
+        default: name,
     });
 
-    const { description } = <{ description: string }>await enquirer.prompt({
-        type: 'text',
-        name: 'description',
-        initial: name,
+    const description = await input({
         message: 'Enter game description:',
+        default: name,
     });
 
-    const { visibility } = <{ visibility: string }>await enquirer.prompt({
-        type: "select",
-        name: "visibility",
+    const visibility = await select({
         message: "Game visibility:",
         choices: [
-            { name: "public", message: "Public", hint: "(Everyone can play!)" },
-            { name: "internal", message: "Internal", hint: "(Only Recursers and people at the Hub can play.)" },
-            { name: "private", message: "Private", hint: "(Only you can play - good for development)" },
+            { value: "public", name: "Public", description: "(Everyone can play!)" },
+            { value: "internal", name: "Internal", description: "(Only Recursers and people at the Hub can play.)" },
+            { value: "private", name: "Private", description: "(Only you can play - good for development)" },
         ]
     });
 
-    const { versioning } = <{ versioning: string }>await enquirer.prompt({
-        type: "select",
-        name: "versioning",
+    const versioning = await select({
         message: "Versioning:",
         choices: [
-            { name: "automatic", message: "Automatic", hint: "(Recommended - version is incremented every push)" },
-            { name: "manual", message: "Manual", hint: "(Manual - you control when versions are incremented)" },
+            { value: "automatic", name: "Automatic", description: "(Recommended - version is incremented every push)" },
+            { value: "manual", name: "Manual", description: "(Manual - you control when versions are incremented)" },
         ]
     });
 
-    const { template: templateDirectory } = <{ template: string }>await enquirer.prompt({
-        type: "select",
-        name: "template",
+    const templateDirectory = await select({
         message: "Starting template:",
         choices: [
-            { name: "vanilla-js", message: "Vanilla (JavaScript)" },
-            { name: "vanilla-ts", message: "Vanilla (TypeScript)" },
-            { name: "vanilla-rs", message: "Vanilla (Rust)" },
+            { value: "vanilla-js", name: "Vanilla (JavaScript)" },
+            { value: "vanilla-ts", name: "Vanilla (TypeScript)" },
+            { value: "vanilla-rs", name: "Vanilla (Rust)" },
         ]
     });
 
-    const { projectDir } = <{ projectDir: string }>await enquirer.prompt({
-        type: "input",
-        name: "projectDir",
+    const projectDirInput = await input({
         message: "Create project at:",
-        initial: `./${name}`,
+        default: `./${name}`,
     });
+    const projectDir = expandTilde(projectDirInput);
 
     if (fs.existsSync(projectDir)) {
-        const { overwrite } = <{ overwrite: boolean }>await enquirer.prompt({
-            type: "confirm",
-            name: "overwrite",
+        const overwrite = await confirm({
             message: `Folder "${projectDir}" already exists. Overwrite?`,
-            initial: false,
+            default: false,
         });
         if (!overwrite) {
             console.log("Aborted.");
@@ -164,14 +149,12 @@ export async function main() {
 async function setup_js(path: string) {
     const exc = execa({ cwd: path, stdio: "inherit" });
 
-    const { packageManager } = <{ packageManager: string }>await enquirer.prompt({
-        type: "select",
-        name: "packageManager",
+    const packageManager = await select({
         message: "Package manager:",
         choices: [
-            { name: "npm", message: "npm" },
-            { name: "pnpm", message: "pnpm" },
-            { name: "bun", message: "bun" },
+            { value: "npm", name: "npm" },
+            { value: "pnpm", name: "pnpm" },
+            { value: "bun", name: "bun" },
         ]
     });
 
