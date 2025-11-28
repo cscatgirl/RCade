@@ -4,6 +4,7 @@ import mustache from "mustache";
 import fs from "node:fs";
 import path, { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 import Mustache from "mustache";
 import { mkdir } from "node:fs/promises";
 import { write_workflow } from "./workflow";
@@ -11,6 +12,24 @@ import { execa } from "execa";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+function getTemplatesDir(): string {
+    // first try relative to source file (works when running from source)
+    const sourceRelative = path.join(__dirname, "../templates");
+    if (fs.existsSync(sourceRelative)) {
+        return sourceRelative;
+    }
+
+    // if bundled, find the rcade package in node_modules
+    const require = createRequire(import.meta.url);
+    try {
+        const rcadePackagePath = require.resolve("rcade/package.json");
+        return path.join(dirname(rcadePackagePath), "templates");
+    } catch {
+        // fallback to source relative path
+        return sourceRelative;
+    }
+}
 
 export async function main() {
     const { name } = <{ name: string }>await enquirer.prompt({
@@ -108,7 +127,7 @@ export async function main() {
         ]
     };
 
-    const templatePath = path.join(__dirname, `../templates/${templateDirectory}`);
+    const templatePath = path.join(getTemplatesDir(), templateDirectory);
     const template = new fdir().withRelativePaths().crawl(templatePath);
 
     const view = {
@@ -117,6 +136,9 @@ export async function main() {
         description,
         private: String(visibility !== "public"),
     }
+
+    // ensure project directory exists
+    await mkdir(projectDir, { recursive: true });
 
     for (const file of await template.withPromise()) {
         const relativePath = file;
