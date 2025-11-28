@@ -98,13 +98,15 @@ export class Game {
             recurse_id: author.recurse_id
         })));
 
-        await getDb().insert(gameDependencies).values(manifest.dependencies.map(dependency => ({
-            gameId: this.data.id,
-            gameVersion: version,
+        if (manifest.dependencies.length > 0) {
+            await getDb().insert(gameDependencies).values(manifest.dependencies.map(dependency => ({
+                gameId: this.data.id,
+                gameVersion: version,
 
-            dependencyName: dependency.name,
-            dependencyVersion: dependency.version,
-        })));
+                dependencyName: dependency.name,
+                dependencyVersion: dependency.version,
+            })));
+        }
 
         const upload_url = await getSignedUrl(
             S3,
