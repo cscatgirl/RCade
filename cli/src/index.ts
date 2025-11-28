@@ -3,10 +3,14 @@ import { fdir } from "fdir";
 import mustache from "mustache";
 import fs from "node:fs";
 import path, { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import Mustache from "mustache";
 import { mkdir } from "node:fs/promises";
 import { write_workflow } from "./workflow";
 import { execa } from "execa";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export async function main() {
     const { name } = <{ name: string }>await enquirer.prompt({
@@ -71,6 +75,27 @@ export async function main() {
         ]
     });
 
+    const { projectDir } = <{ projectDir: string }>await enquirer.prompt({
+        type: "input",
+        name: "projectDir",
+        message: "Create project at:",
+        initial: `./${name}`,
+    });
+
+    if (fs.existsSync(projectDir)) {
+        const { overwrite } = <{ overwrite: boolean }>await enquirer.prompt({
+            type: "confirm",
+            name: "overwrite",
+            message: `Folder "${projectDir}" already exists. Overwrite?`,
+            initial: false,
+        });
+        if (!overwrite) {
+            console.log("Aborted.");
+            return;
+        }
+        fs.rmSync(projectDir, { recursive: true, force: true });
+    }
+
     const manifest = {
         name,
         display_name,
@@ -97,7 +122,7 @@ export async function main() {
         const relativePath = file;
         const source = fs.readFileSync(path.join(templatePath, relativePath), "utf-8");
         const render = Mustache.render(source, view);
-        const destination = path.join(".", name, file);
+        const destination = path.join(projectDir, file);
         const destination_dir = dirname(destination);
 
         await mkdir(destination_dir, { recursive: true });
@@ -105,12 +130,12 @@ export async function main() {
         fs.writeFileSync(destination, render);
     }
 
-    fs.writeFileSync(path.join(".", name, "rcade.manifest.json"), JSON.stringify(manifest, undefined, 2));
+    fs.writeFileSync(path.join(projectDir, "rcade.manifest.json"), JSON.stringify(manifest, undefined, 2));
 
     switch (templateDirectory) {
-        case "vanilla-js": setup_js(path.join(".", name)); break;
-        case "vanilla-ts": setup_js(path.join(".", name)); break;
-        case "vanilla-rs": setup_rs(path.join(".", name)); break;
+        case "vanilla-js": await setup_js(projectDir); break;
+        case "vanilla-ts": await setup_js(projectDir); break;
+        case "vanilla-rs": await setup_rs(projectDir); break;
     }
 }
 

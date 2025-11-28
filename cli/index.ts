@@ -1,5 +1,1 @@
-import { main } from "./src";
-
-export { main };
-
-main();
+export { main } from "./src";

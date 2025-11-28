@@ -15,14 +15,16 @@
     "typescript": "^5"
   },
   "bin": {
-    "rcade": "./dist/index.js"
+    "rcade": "./dist/bin.js"
   },
+  "main": "./dist/index.js",
   "description": "A CLI tool to generate a new rcade project",
   "files": [
-    "dist"
+    "dist",
+    "templates"
   ],
   "scripts": {
-    "build": "bun build index.ts --outdir dist --target node --banner '#!/usr/bin/env node'"
+    "build": "bun build bin.ts index.ts --outdir dist --target node"
   },
   "type": "module",
   "dependencies": {
