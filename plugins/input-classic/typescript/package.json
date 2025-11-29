@@ -22,7 +22,7 @@
     "@types/bun": "latest"
   },
   "dependencies": {
-    "@rcade/sdk": "0.1.3"
+    "@rcade/sdk": "workspace:*"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
