@@ -86,4 +86,17 @@ The RCade cabinet uses a 336x262 pixel display. The template is pre-configured w
 
 ## Deployment
 
-Push to GitHub and the included workflow will automatically deploy to RCade.
+First, create a new repository on GitHub:
+
+1. Go to [github.com/new](https://github.com/new)
+2. Create a new repository (can be public or private)
+3. **Don't** initialize it with a README, .gitignore, or license
+
+Then connect your local project and push:
+
+```bash
+git remote add origin git@github.com:YOUR_USERNAME/YOUR_REPO.git
+git push -u origin main
+```
+
+The included GitHub Actions workflow will automatically deploy to RCade.

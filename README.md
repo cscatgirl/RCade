@@ -196,10 +196,19 @@ This starts a local development server with hot reloading. Make changes and see 
 
 ### Deploy to RCade
 
+First, create a new repository on GitHub:
+
+1. Go to [github.com/new](https://github.com/new)
+2. Create a new repository (can be public or private)
+3. **Don't** initialize it with a README, .gitignore, or license
+
+Then connect your local project to GitHub and push:
+
 ```bash
+git remote add origin git@github.com:YOUR_USERNAME/YOUR_REPO.git
 git add .
-git commit -m "Add power-ups"
-git push
+git commit -m "Initial commit"
+git push -u origin main
 ```
 
 That's it. GitHub Actions handles the rest. Watch the Actions tab to see your deployment progress.
