@@ -39,20 +39,25 @@
     "productName": "rcade",
     "artifactName": "rcade-cabinet-${os}-${arch}.${ext}",
     "files": [
-      "dist/**/*"
+      "dist/**/*",
+      "assets/**/*"
     ],
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "assets"
     },
     "mac": {
       "category": "public.app-category.games",
-      "target": "zip"
+      "target": "zip",
+      "icon": "assets/icon.icns"
     },
     "win": {
-      "target": "zip"
+      "target": "zip",
+      "icon": "assets/icon.png"
     },
     "linux": {
-      "target": "AppImage"
+      "target": "AppImage",
+      "icon": "assets/icon.png"
     }
   }
 }

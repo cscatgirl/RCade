@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, session } from 'electron';
+import { app, BrowserWindow, ipcMain, session, nativeImage } from 'electron';
 import path from 'path';
 import fs from 'fs/promises';
 import { createWriteStream, existsSync } from 'fs';
@@ -18,6 +18,11 @@ const args = parseCliArgs();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isDev = !app.isPackaged || args.dev;
+
+// Icon path - in dev mode use assets folder, in production it's bundled
+const iconPath = isDev
+  ? path.join(__dirname, '../../assets/icon.png')
+  : path.join(__dirname, '../assets/icon.png');
 
 // Scale factor of 2 is the largest reasonable size for a normal macbook screen
 // and should stay the default for development.
@@ -165,6 +170,7 @@ function createWindow(): void {
 
   const mainWindow = new BrowserWindow({
     fullscreen: fullscreen,
+    icon: iconPath,
     ...(isDev && {
       width: 336 * scaleFactor,
       height: 262 * scaleFactor,
@@ -210,6 +216,11 @@ function createWindow(): void {
 
 app.whenReady().then(async () => {
   await ensureCacheDir();
+
+  // Set dock icon on macOS (only in dev mode - production uses app bundle icon)
+  if (isDev && process.platform === 'darwin' && app.dock) {
+    app.dock.setIcon(nativeImage.createFromPath(iconPath));
+  }
 
   ipcMain.handle('get-games', async (): Promise<GameInfo[]> => {
     const games = await apiClient.getAllGames();
