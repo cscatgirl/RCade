@@ -18789,1789 +18789,6 @@ var require_core = __commonJS((exports) => {
   exports.platform = __importStar(require_platform());
 });
 
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/internal/constants.js
-var require_constants6 = __commonJS((exports, module) => {
-  var SEMVER_SPEC_VERSION = "2.0.0";
-  var MAX_LENGTH = 256;
-  var MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER || 9007199254740991;
-  var MAX_SAFE_COMPONENT_LENGTH = 16;
-  var MAX_SAFE_BUILD_LENGTH = MAX_LENGTH - 6;
-  var RELEASE_TYPES = [
-    "major",
-    "premajor",
-    "minor",
-    "preminor",
-    "patch",
-    "prepatch",
-    "prerelease"
-  ];
-  module.exports = {
-    MAX_LENGTH,
-    MAX_SAFE_COMPONENT_LENGTH,
-    MAX_SAFE_BUILD_LENGTH,
-    MAX_SAFE_INTEGER,
-    RELEASE_TYPES,
-    SEMVER_SPEC_VERSION,
-    FLAG_INCLUDE_PRERELEASE: 1,
-    FLAG_LOOSE: 2
-  };
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/internal/debug.js
-var require_debug = __commonJS((exports, module) => {
-  var debug = typeof process === "object" && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG) ? (...args) => console.error("SEMVER", ...args) : () => {};
-  module.exports = debug;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/internal/re.js
-var require_re = __commonJS((exports, module) => {
-  var {
-    MAX_SAFE_COMPONENT_LENGTH,
-    MAX_SAFE_BUILD_LENGTH,
-    MAX_LENGTH
-  } = require_constants6();
-  var debug = require_debug();
-  exports = module.exports = {};
-  var re = exports.re = [];
-  var safeRe = exports.safeRe = [];
-  var src = exports.src = [];
-  var safeSrc = exports.safeSrc = [];
-  var t = exports.t = {};
-  var R = 0;
-  var LETTERDASHNUMBER = "[a-zA-Z0-9-]";
-  var safeRegexReplacements = [
-    ["\\s", 1],
-    ["\\d", MAX_LENGTH],
-    [LETTERDASHNUMBER, MAX_SAFE_BUILD_LENGTH]
-  ];
-  var makeSafeRegex = (value) => {
-    for (const [token, max] of safeRegexReplacements) {
-      value = value.split(`${token}*`).join(`${token}{0,${max}}`).split(`${token}+`).join(`${token}{1,${max}}`);
-    }
-    return value;
-  };
-  var createToken = (name, value, isGlobal) => {
-    const safe = makeSafeRegex(value);
-    const index = R++;
-    debug(name, index, value);
-    t[name] = index;
-    src[index] = value;
-    safeSrc[index] = safe;
-    re[index] = new RegExp(value, isGlobal ? "g" : undefined);
-    safeRe[index] = new RegExp(safe, isGlobal ? "g" : undefined);
-  };
-  createToken("NUMERICIDENTIFIER", "0|[1-9]\\d*");
-  createToken("NUMERICIDENTIFIERLOOSE", "\\d+");
-  createToken("NONNUMERICIDENTIFIER", `\\d*[a-zA-Z-]${LETTERDASHNUMBER}*`);
-  createToken("MAINVERSION", `(${src[t.NUMERICIDENTIFIER]})\\.` + `(${src[t.NUMERICIDENTIFIER]})\\.` + `(${src[t.NUMERICIDENTIFIER]})`);
-  createToken("MAINVERSIONLOOSE", `(${src[t.NUMERICIDENTIFIERLOOSE]})\\.` + `(${src[t.NUMERICIDENTIFIERLOOSE]})\\.` + `(${src[t.NUMERICIDENTIFIERLOOSE]})`);
-  createToken("PRERELEASEIDENTIFIER", `(?:${src[t.NONNUMERICIDENTIFIER]}|${src[t.NUMERICIDENTIFIER]})`);
-  createToken("PRERELEASEIDENTIFIERLOOSE", `(?:${src[t.NONNUMERICIDENTIFIER]}|${src[t.NUMERICIDENTIFIERLOOSE]})`);
-  createToken("PRERELEASE", `(?:-(${src[t.PRERELEASEIDENTIFIER]}(?:\\.${src[t.PRERELEASEIDENTIFIER]})*))`);
-  createToken("PRERELEASELOOSE", `(?:-?(${src[t.PRERELEASEIDENTIFIERLOOSE]}(?:\\.${src[t.PRERELEASEIDENTIFIERLOOSE]})*))`);
-  createToken("BUILDIDENTIFIER", `${LETTERDASHNUMBER}+`);
-  createToken("BUILD", `(?:\\+(${src[t.BUILDIDENTIFIER]}(?:\\.${src[t.BUILDIDENTIFIER]})*))`);
-  createToken("FULLPLAIN", `v?${src[t.MAINVERSION]}${src[t.PRERELEASE]}?${src[t.BUILD]}?`);
-  createToken("FULL", `^${src[t.FULLPLAIN]}$`);
-  createToken("LOOSEPLAIN", `[v=\\s]*${src[t.MAINVERSIONLOOSE]}${src[t.PRERELEASELOOSE]}?${src[t.BUILD]}?`);
-  createToken("LOOSE", `^${src[t.LOOSEPLAIN]}$`);
-  createToken("GTLT", "((?:<|>)?=?)");
-  createToken("XRANGEIDENTIFIERLOOSE", `${src[t.NUMERICIDENTIFIERLOOSE]}|x|X|\\*`);
-  createToken("XRANGEIDENTIFIER", `${src[t.NUMERICIDENTIFIER]}|x|X|\\*`);
-  createToken("XRANGEPLAIN", `[v=\\s]*(${src[t.XRANGEIDENTIFIER]})` + `(?:\\.(${src[t.XRANGEIDENTIFIER]})` + `(?:\\.(${src[t.XRANGEIDENTIFIER]})` + `(?:${src[t.PRERELEASE]})?${src[t.BUILD]}?` + `)?)?`);
-  createToken("XRANGEPLAINLOOSE", `[v=\\s]*(${src[t.XRANGEIDENTIFIERLOOSE]})` + `(?:\\.(${src[t.XRANGEIDENTIFIERLOOSE]})` + `(?:\\.(${src[t.XRANGEIDENTIFIERLOOSE]})` + `(?:${src[t.PRERELEASELOOSE]})?${src[t.BUILD]}?` + `)?)?`);
-  createToken("XRANGE", `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAIN]}$`);
-  createToken("XRANGELOOSE", `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAINLOOSE]}$`);
-  createToken("COERCEPLAIN", `${"(^|[^\\d])" + "(\\d{1,"}${MAX_SAFE_COMPONENT_LENGTH}})` + `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?` + `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?`);
-  createToken("COERCE", `${src[t.COERCEPLAIN]}(?:$|[^\\d])`);
-  createToken("COERCEFULL", src[t.COERCEPLAIN] + `(?:${src[t.PRERELEASE]})?` + `(?:${src[t.BUILD]})?` + `(?:$|[^\\d])`);
-  createToken("COERCERTL", src[t.COERCE], true);
-  createToken("COERCERTLFULL", src[t.COERCEFULL], true);
-  createToken("LONETILDE", "(?:~>?)");
-  createToken("TILDETRIM", `(\\s*)${src[t.LONETILDE]}\\s+`, true);
-  exports.tildeTrimReplace = "$1~";
-  createToken("TILDE", `^${src[t.LONETILDE]}${src[t.XRANGEPLAIN]}$`);
-  createToken("TILDELOOSE", `^${src[t.LONETILDE]}${src[t.XRANGEPLAINLOOSE]}$`);
-  createToken("LONECARET", "(?:\\^)");
-  createToken("CARETTRIM", `(\\s*)${src[t.LONECARET]}\\s+`, true);
-  exports.caretTrimReplace = "$1^";
-  createToken("CARET", `^${src[t.LONECARET]}${src[t.XRANGEPLAIN]}$`);
-  createToken("CARETLOOSE", `^${src[t.LONECARET]}${src[t.XRANGEPLAINLOOSE]}$`);
-  createToken("COMPARATORLOOSE", `^${src[t.GTLT]}\\s*(${src[t.LOOSEPLAIN]})$|^$`);
-  createToken("COMPARATOR", `^${src[t.GTLT]}\\s*(${src[t.FULLPLAIN]})$|^$`);
-  createToken("COMPARATORTRIM", `(\\s*)${src[t.GTLT]}\\s*(${src[t.LOOSEPLAIN]}|${src[t.XRANGEPLAIN]})`, true);
-  exports.comparatorTrimReplace = "$1$2$3";
-  createToken("HYPHENRANGE", `^\\s*(${src[t.XRANGEPLAIN]})` + `\\s+-\\s+` + `(${src[t.XRANGEPLAIN]})` + `\\s*$`);
-  createToken("HYPHENRANGELOOSE", `^\\s*(${src[t.XRANGEPLAINLOOSE]})` + `\\s+-\\s+` + `(${src[t.XRANGEPLAINLOOSE]})` + `\\s*$`);
-  createToken("STAR", "(<|>)?=?\\s*\\*");
-  createToken("GTE0", "^\\s*>=\\s*0\\.0\\.0\\s*$");
-  createToken("GTE0PRE", "^\\s*>=\\s*0\\.0\\.0-0\\s*$");
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/internal/parse-options.js
-var require_parse_options = __commonJS((exports, module) => {
-  var looseOption = Object.freeze({ loose: true });
-  var emptyOpts = Object.freeze({});
-  var parseOptions = (options) => {
-    if (!options) {
-      return emptyOpts;
-    }
-    if (typeof options !== "object") {
-      return looseOption;
-    }
-    return options;
-  };
-  module.exports = parseOptions;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/internal/identifiers.js
-var require_identifiers = __commonJS((exports, module) => {
-  var numeric = /^[0-9]+$/;
-  var compareIdentifiers = (a, b) => {
-    if (typeof a === "number" && typeof b === "number") {
-      return a === b ? 0 : a < b ? -1 : 1;
-    }
-    const anum = numeric.test(a);
-    const bnum = numeric.test(b);
-    if (anum && bnum) {
-      a = +a;
-      b = +b;
-    }
-    return a === b ? 0 : anum && !bnum ? -1 : bnum && !anum ? 1 : a < b ? -1 : 1;
-  };
-  var rcompareIdentifiers = (a, b) => compareIdentifiers(b, a);
-  module.exports = {
-    compareIdentifiers,
-    rcompareIdentifiers
-  };
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/classes/semver.js
-var require_semver = __commonJS((exports, module) => {
-  var debug = require_debug();
-  var { MAX_LENGTH, MAX_SAFE_INTEGER } = require_constants6();
-  var { safeRe: re, t } = require_re();
-  var parseOptions = require_parse_options();
-  var { compareIdentifiers } = require_identifiers();
-
-  class SemVer {
-    constructor(version2, options) {
-      options = parseOptions(options);
-      if (version2 instanceof SemVer) {
-        if (version2.loose === !!options.loose && version2.includePrerelease === !!options.includePrerelease) {
-          return version2;
-        } else {
-          version2 = version2.version;
-        }
-      } else if (typeof version2 !== "string") {
-        throw new TypeError(`Invalid version. Must be a string. Got type "${typeof version2}".`);
-      }
-      if (version2.length > MAX_LENGTH) {
-        throw new TypeError(`version is longer than ${MAX_LENGTH} characters`);
-      }
-      debug("SemVer", version2, options);
-      this.options = options;
-      this.loose = !!options.loose;
-      this.includePrerelease = !!options.includePrerelease;
-      const m = version2.trim().match(options.loose ? re[t.LOOSE] : re[t.FULL]);
-      if (!m) {
-        throw new TypeError(`Invalid Version: ${version2}`);
-      }
-      this.raw = version2;
-      this.major = +m[1];
-      this.minor = +m[2];
-      this.patch = +m[3];
-      if (this.major > MAX_SAFE_INTEGER || this.major < 0) {
-        throw new TypeError("Invalid major version");
-      }
-      if (this.minor > MAX_SAFE_INTEGER || this.minor < 0) {
-        throw new TypeError("Invalid minor version");
-      }
-      if (this.patch > MAX_SAFE_INTEGER || this.patch < 0) {
-        throw new TypeError("Invalid patch version");
-      }
-      if (!m[4]) {
-        this.prerelease = [];
-      } else {
-        this.prerelease = m[4].split(".").map((id) => {
-          if (/^[0-9]+$/.test(id)) {
-            const num = +id;
-            if (num >= 0 && num < MAX_SAFE_INTEGER) {
-              return num;
-            }
-          }
-          return id;
-        });
-      }
-      this.build = m[5] ? m[5].split(".") : [];
-      this.format();
-    }
-    format() {
-      this.version = `${this.major}.${this.minor}.${this.patch}`;
-      if (this.prerelease.length) {
-        this.version += `-${this.prerelease.join(".")}`;
-      }
-      return this.version;
-    }
-    toString() {
-      return this.version;
-    }
-    compare(other) {
-      debug("SemVer.compare", this.version, this.options, other);
-      if (!(other instanceof SemVer)) {
-        if (typeof other === "string" && other === this.version) {
-          return 0;
-        }
-        other = new SemVer(other, this.options);
-      }
-      if (other.version === this.version) {
-        return 0;
-      }
-      return this.compareMain(other) || this.comparePre(other);
-    }
-    compareMain(other) {
-      if (!(other instanceof SemVer)) {
-        other = new SemVer(other, this.options);
-      }
-      if (this.major < other.major) {
-        return -1;
-      }
-      if (this.major > other.major) {
-        return 1;
-      }
-      if (this.minor < other.minor) {
-        return -1;
-      }
-      if (this.minor > other.minor) {
-        return 1;
-      }
-      if (this.patch < other.patch) {
-        return -1;
-      }
-      if (this.patch > other.patch) {
-        return 1;
-      }
-      return 0;
-    }
-    comparePre(other) {
-      if (!(other instanceof SemVer)) {
-        other = new SemVer(other, this.options);
-      }
-      if (this.prerelease.length && !other.prerelease.length) {
-        return -1;
-      } else if (!this.prerelease.length && other.prerelease.length) {
-        return 1;
-      } else if (!this.prerelease.length && !other.prerelease.length) {
-        return 0;
-      }
-      let i = 0;
-      do {
-        const a = this.prerelease[i];
-        const b = other.prerelease[i];
-        debug("prerelease compare", i, a, b);
-        if (a === undefined && b === undefined) {
-          return 0;
-        } else if (b === undefined) {
-          return 1;
-        } else if (a === undefined) {
-          return -1;
-        } else if (a === b) {
-          continue;
-        } else {
-          return compareIdentifiers(a, b);
-        }
-      } while (++i);
-    }
-    compareBuild(other) {
-      if (!(other instanceof SemVer)) {
-        other = new SemVer(other, this.options);
-      }
-      let i = 0;
-      do {
-        const a = this.build[i];
-        const b = other.build[i];
-        debug("build compare", i, a, b);
-        if (a === undefined && b === undefined) {
-          return 0;
-        } else if (b === undefined) {
-          return 1;
-        } else if (a === undefined) {
-          return -1;
-        } else if (a === b) {
-          continue;
-        } else {
-          return compareIdentifiers(a, b);
-        }
-      } while (++i);
-    }
-    inc(release, identifier, identifierBase) {
-      if (release.startsWith("pre")) {
-        if (!identifier && identifierBase === false) {
-          throw new Error("invalid increment argument: identifier is empty");
-        }
-        if (identifier) {
-          const match = `-${identifier}`.match(this.options.loose ? re[t.PRERELEASELOOSE] : re[t.PRERELEASE]);
-          if (!match || match[1] !== identifier) {
-            throw new Error(`invalid identifier: ${identifier}`);
-          }
-        }
-      }
-      switch (release) {
-        case "premajor":
-          this.prerelease.length = 0;
-          this.patch = 0;
-          this.minor = 0;
-          this.major++;
-          this.inc("pre", identifier, identifierBase);
-          break;
-        case "preminor":
-          this.prerelease.length = 0;
-          this.patch = 0;
-          this.minor++;
-          this.inc("pre", identifier, identifierBase);
-          break;
-        case "prepatch":
-          this.prerelease.length = 0;
-          this.inc("patch", identifier, identifierBase);
-          this.inc("pre", identifier, identifierBase);
-          break;
-        case "prerelease":
-          if (this.prerelease.length === 0) {
-            this.inc("patch", identifier, identifierBase);
-          }
-          this.inc("pre", identifier, identifierBase);
-          break;
-        case "release":
-          if (this.prerelease.length === 0) {
-            throw new Error(`version ${this.raw} is not a prerelease`);
-          }
-          this.prerelease.length = 0;
-          break;
-        case "major":
-          if (this.minor !== 0 || this.patch !== 0 || this.prerelease.length === 0) {
-            this.major++;
-          }
-          this.minor = 0;
-          this.patch = 0;
-          this.prerelease = [];
-          break;
-        case "minor":
-          if (this.patch !== 0 || this.prerelease.length === 0) {
-            this.minor++;
-          }
-          this.patch = 0;
-          this.prerelease = [];
-          break;
-        case "patch":
-          if (this.prerelease.length === 0) {
-            this.patch++;
-          }
-          this.prerelease = [];
-          break;
-        case "pre": {
-          const base = Number(identifierBase) ? 1 : 0;
-          if (this.prerelease.length === 0) {
-            this.prerelease = [base];
-          } else {
-            let i = this.prerelease.length;
-            while (--i >= 0) {
-              if (typeof this.prerelease[i] === "number") {
-                this.prerelease[i]++;
-                i = -2;
-              }
-            }
-            if (i === -1) {
-              if (identifier === this.prerelease.join(".") && identifierBase === false) {
-                throw new Error("invalid increment argument: identifier already exists");
-              }
-              this.prerelease.push(base);
-            }
-          }
-          if (identifier) {
-            let prerelease = [identifier, base];
-            if (identifierBase === false) {
-              prerelease = [identifier];
-            }
-            if (compareIdentifiers(this.prerelease[0], identifier) === 0) {
-              if (isNaN(this.prerelease[1])) {
-                this.prerelease = prerelease;
-              }
-            } else {
-              this.prerelease = prerelease;
-            }
-          }
-          break;
-        }
-        default:
-          throw new Error(`invalid increment argument: ${release}`);
-      }
-      this.raw = this.format();
-      if (this.build.length) {
-        this.raw += `+${this.build.join(".")}`;
-      }
-      return this;
-    }
-  }
-  module.exports = SemVer;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/parse.js
-var require_parse2 = __commonJS((exports, module) => {
-  var SemVer = require_semver();
-  var parse5 = (version2, options, throwErrors = false) => {
-    if (version2 instanceof SemVer) {
-      return version2;
-    }
-    try {
-      return new SemVer(version2, options);
-    } catch (er) {
-      if (!throwErrors) {
-        return null;
-      }
-      throw er;
-    }
-  };
-  module.exports = parse5;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/valid.js
-var require_valid = __commonJS((exports, module) => {
-  var parse5 = require_parse2();
-  var valid = (version2, options) => {
-    const v = parse5(version2, options);
-    return v ? v.version : null;
-  };
-  module.exports = valid;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/clean.js
-var require_clean = __commonJS((exports, module) => {
-  var parse5 = require_parse2();
-  var clean = (version2, options) => {
-    const s = parse5(version2.trim().replace(/^[=v]+/, ""), options);
-    return s ? s.version : null;
-  };
-  module.exports = clean;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/inc.js
-var require_inc = __commonJS((exports, module) => {
-  var SemVer = require_semver();
-  var inc = (version2, release, options, identifier, identifierBase) => {
-    if (typeof options === "string") {
-      identifierBase = identifier;
-      identifier = options;
-      options = undefined;
-    }
-    try {
-      return new SemVer(version2 instanceof SemVer ? version2.version : version2, options).inc(release, identifier, identifierBase).version;
-    } catch (er) {
-      return null;
-    }
-  };
-  module.exports = inc;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/diff.js
-var require_diff = __commonJS((exports, module) => {
-  var parse5 = require_parse2();
-  var diff = (version1, version2) => {
-    const v1 = parse5(version1, null, true);
-    const v2 = parse5(version2, null, true);
-    const comparison = v1.compare(v2);
-    if (comparison === 0) {
-      return null;
-    }
-    const v1Higher = comparison > 0;
-    const highVersion = v1Higher ? v1 : v2;
-    const lowVersion = v1Higher ? v2 : v1;
-    const highHasPre = !!highVersion.prerelease.length;
-    const lowHasPre = !!lowVersion.prerelease.length;
-    if (lowHasPre && !highHasPre) {
-      if (!lowVersion.patch && !lowVersion.minor) {
-        return "major";
-      }
-      if (lowVersion.compareMain(highVersion) === 0) {
-        if (lowVersion.minor && !lowVersion.patch) {
-          return "minor";
-        }
-        return "patch";
-      }
-    }
-    const prefix = highHasPre ? "pre" : "";
-    if (v1.major !== v2.major) {
-      return prefix + "major";
-    }
-    if (v1.minor !== v2.minor) {
-      return prefix + "minor";
-    }
-    if (v1.patch !== v2.patch) {
-      return prefix + "patch";
-    }
-    return "prerelease";
-  };
-  module.exports = diff;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/major.js
-var require_major = __commonJS((exports, module) => {
-  var SemVer = require_semver();
-  var major = (a, loose) => new SemVer(a, loose).major;
-  module.exports = major;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/minor.js
-var require_minor = __commonJS((exports, module) => {
-  var SemVer = require_semver();
-  var minor = (a, loose) => new SemVer(a, loose).minor;
-  module.exports = minor;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/patch.js
-var require_patch = __commonJS((exports, module) => {
-  var SemVer = require_semver();
-  var patch = (a, loose) => new SemVer(a, loose).patch;
-  module.exports = patch;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/prerelease.js
-var require_prerelease = __commonJS((exports, module) => {
-  var parse5 = require_parse2();
-  var prerelease = (version2, options) => {
-    const parsed = parse5(version2, options);
-    return parsed && parsed.prerelease.length ? parsed.prerelease : null;
-  };
-  module.exports = prerelease;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/compare.js
-var require_compare = __commonJS((exports, module) => {
-  var SemVer = require_semver();
-  var compare = (a, b, loose) => new SemVer(a, loose).compare(new SemVer(b, loose));
-  module.exports = compare;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/rcompare.js
-var require_rcompare = __commonJS((exports, module) => {
-  var compare = require_compare();
-  var rcompare = (a, b, loose) => compare(b, a, loose);
-  module.exports = rcompare;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/compare-loose.js
-var require_compare_loose = __commonJS((exports, module) => {
-  var compare = require_compare();
-  var compareLoose = (a, b) => compare(a, b, true);
-  module.exports = compareLoose;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/compare-build.js
-var require_compare_build = __commonJS((exports, module) => {
-  var SemVer = require_semver();
-  var compareBuild = (a, b, loose) => {
-    const versionA = new SemVer(a, loose);
-    const versionB = new SemVer(b, loose);
-    return versionA.compare(versionB) || versionA.compareBuild(versionB);
-  };
-  module.exports = compareBuild;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/sort.js
-var require_sort = __commonJS((exports, module) => {
-  var compareBuild = require_compare_build();
-  var sort = (list, loose) => list.sort((a, b) => compareBuild(a, b, loose));
-  module.exports = sort;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/rsort.js
-var require_rsort = __commonJS((exports, module) => {
-  var compareBuild = require_compare_build();
-  var rsort = (list, loose) => list.sort((a, b) => compareBuild(b, a, loose));
-  module.exports = rsort;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/gt.js
-var require_gt = __commonJS((exports, module) => {
-  var compare = require_compare();
-  var gt = (a, b, loose) => compare(a, b, loose) > 0;
-  module.exports = gt;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/lt.js
-var require_lt = __commonJS((exports, module) => {
-  var compare = require_compare();
-  var lt = (a, b, loose) => compare(a, b, loose) < 0;
-  module.exports = lt;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/eq.js
-var require_eq = __commonJS((exports, module) => {
-  var compare = require_compare();
-  var eq = (a, b, loose) => compare(a, b, loose) === 0;
-  module.exports = eq;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/neq.js
-var require_neq = __commonJS((exports, module) => {
-  var compare = require_compare();
-  var neq = (a, b, loose) => compare(a, b, loose) !== 0;
-  module.exports = neq;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/gte.js
-var require_gte = __commonJS((exports, module) => {
-  var compare = require_compare();
-  var gte = (a, b, loose) => compare(a, b, loose) >= 0;
-  module.exports = gte;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/lte.js
-var require_lte = __commonJS((exports, module) => {
-  var compare = require_compare();
-  var lte = (a, b, loose) => compare(a, b, loose) <= 0;
-  module.exports = lte;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/cmp.js
-var require_cmp = __commonJS((exports, module) => {
-  var eq = require_eq();
-  var neq = require_neq();
-  var gt = require_gt();
-  var gte = require_gte();
-  var lt = require_lt();
-  var lte = require_lte();
-  var cmp = (a, op, b, loose) => {
-    switch (op) {
-      case "===":
-        if (typeof a === "object") {
-          a = a.version;
-        }
-        if (typeof b === "object") {
-          b = b.version;
-        }
-        return a === b;
-      case "!==":
-        if (typeof a === "object") {
-          a = a.version;
-        }
-        if (typeof b === "object") {
-          b = b.version;
-        }
-        return a !== b;
-      case "":
-      case "=":
-      case "==":
-        return eq(a, b, loose);
-      case "!=":
-        return neq(a, b, loose);
-      case ">":
-        return gt(a, b, loose);
-      case ">=":
-        return gte(a, b, loose);
-      case "<":
-        return lt(a, b, loose);
-      case "<=":
-        return lte(a, b, loose);
-      default:
-        throw new TypeError(`Invalid operator: ${op}`);
-    }
-  };
-  module.exports = cmp;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/coerce.js
-var require_coerce = __commonJS((exports, module) => {
-  var SemVer = require_semver();
-  var parse5 = require_parse2();
-  var { safeRe: re, t } = require_re();
-  var coerce = (version2, options) => {
-    if (version2 instanceof SemVer) {
-      return version2;
-    }
-    if (typeof version2 === "number") {
-      version2 = String(version2);
-    }
-    if (typeof version2 !== "string") {
-      return null;
-    }
-    options = options || {};
-    let match = null;
-    if (!options.rtl) {
-      match = version2.match(options.includePrerelease ? re[t.COERCEFULL] : re[t.COERCE]);
-    } else {
-      const coerceRtlRegex = options.includePrerelease ? re[t.COERCERTLFULL] : re[t.COERCERTL];
-      let next;
-      while ((next = coerceRtlRegex.exec(version2)) && (!match || match.index + match[0].length !== version2.length)) {
-        if (!match || next.index + next[0].length !== match.index + match[0].length) {
-          match = next;
-        }
-        coerceRtlRegex.lastIndex = next.index + next[1].length + next[2].length;
-      }
-      coerceRtlRegex.lastIndex = -1;
-    }
-    if (match === null) {
-      return null;
-    }
-    const major = match[2];
-    const minor = match[3] || "0";
-    const patch = match[4] || "0";
-    const prerelease = options.includePrerelease && match[5] ? `-${match[5]}` : "";
-    const build = options.includePrerelease && match[6] ? `+${match[6]}` : "";
-    return parse5(`${major}.${minor}.${patch}${prerelease}${build}`, options);
-  };
-  module.exports = coerce;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/internal/lrucache.js
-var require_lrucache = __commonJS((exports, module) => {
-  class LRUCache {
-    constructor() {
-      this.max = 1000;
-      this.map = new Map;
-    }
-    get(key) {
-      const value = this.map.get(key);
-      if (value === undefined) {
-        return;
-      } else {
-        this.map.delete(key);
-        this.map.set(key, value);
-        return value;
-      }
-    }
-    delete(key) {
-      return this.map.delete(key);
-    }
-    set(key, value) {
-      const deleted = this.delete(key);
-      if (!deleted && value !== undefined) {
-        if (this.map.size >= this.max) {
-          const firstKey = this.map.keys().next().value;
-          this.delete(firstKey);
-        }
-        this.map.set(key, value);
-      }
-      return this;
-    }
-  }
-  module.exports = LRUCache;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/classes/range.js
-var require_range = __commonJS((exports, module) => {
-  var SPACE_CHARACTERS = /\s+/g;
-
-  class Range {
-    constructor(range, options) {
-      options = parseOptions(options);
-      if (range instanceof Range) {
-        if (range.loose === !!options.loose && range.includePrerelease === !!options.includePrerelease) {
-          return range;
-        } else {
-          return new Range(range.raw, options);
-        }
-      }
-      if (range instanceof Comparator) {
-        this.raw = range.value;
-        this.set = [[range]];
-        this.formatted = undefined;
-        return this;
-      }
-      this.options = options;
-      this.loose = !!options.loose;
-      this.includePrerelease = !!options.includePrerelease;
-      this.raw = range.trim().replace(SPACE_CHARACTERS, " ");
-      this.set = this.raw.split("||").map((r) => this.parseRange(r.trim())).filter((c) => c.length);
-      if (!this.set.length) {
-        throw new TypeError(`Invalid SemVer Range: ${this.raw}`);
-      }
-      if (this.set.length > 1) {
-        const first = this.set[0];
-        this.set = this.set.filter((c) => !isNullSet(c[0]));
-        if (this.set.length === 0) {
-          this.set = [first];
-        } else if (this.set.length > 1) {
-          for (const c of this.set) {
-            if (c.length === 1 && isAny(c[0])) {
-              this.set = [c];
-              break;
-            }
-          }
-        }
-      }
-      this.formatted = undefined;
-    }
-    get range() {
-      if (this.formatted === undefined) {
-        this.formatted = "";
-        for (let i = 0;i < this.set.length; i++) {
-          if (i > 0) {
-            this.formatted += "||";
-          }
-          const comps = this.set[i];
-          for (let k = 0;k < comps.length; k++) {
-            if (k > 0) {
-              this.formatted += " ";
-            }
-            this.formatted += comps[k].toString().trim();
-          }
-        }
-      }
-      return this.formatted;
-    }
-    format() {
-      return this.range;
-    }
-    toString() {
-      return this.range;
-    }
-    parseRange(range) {
-      const memoOpts = (this.options.includePrerelease && FLAG_INCLUDE_PRERELEASE) | (this.options.loose && FLAG_LOOSE);
-      const memoKey = memoOpts + ":" + range;
-      const cached2 = cache.get(memoKey);
-      if (cached2) {
-        return cached2;
-      }
-      const loose = this.options.loose;
-      const hr = loose ? re[t.HYPHENRANGELOOSE] : re[t.HYPHENRANGE];
-      range = range.replace(hr, hyphenReplace(this.options.includePrerelease));
-      debug("hyphen replace", range);
-      range = range.replace(re[t.COMPARATORTRIM], comparatorTrimReplace);
-      debug("comparator trim", range);
-      range = range.replace(re[t.TILDETRIM], tildeTrimReplace);
-      debug("tilde trim", range);
-      range = range.replace(re[t.CARETTRIM], caretTrimReplace);
-      debug("caret trim", range);
-      let rangeList = range.split(" ").map((comp) => parseComparator(comp, this.options)).join(" ").split(/\s+/).map((comp) => replaceGTE0(comp, this.options));
-      if (loose) {
-        rangeList = rangeList.filter((comp) => {
-          debug("loose invalid filter", comp, this.options);
-          return !!comp.match(re[t.COMPARATORLOOSE]);
-        });
-      }
-      debug("range list", rangeList);
-      const rangeMap = new Map;
-      const comparators = rangeList.map((comp) => new Comparator(comp, this.options));
-      for (const comp of comparators) {
-        if (isNullSet(comp)) {
-          return [comp];
-        }
-        rangeMap.set(comp.value, comp);
-      }
-      if (rangeMap.size > 1 && rangeMap.has("")) {
-        rangeMap.delete("");
-      }
-      const result = [...rangeMap.values()];
-      cache.set(memoKey, result);
-      return result;
-    }
-    intersects(range, options) {
-      if (!(range instanceof Range)) {
-        throw new TypeError("a Range is required");
-      }
-      return this.set.some((thisComparators) => {
-        return isSatisfiable(thisComparators, options) && range.set.some((rangeComparators) => {
-          return isSatisfiable(rangeComparators, options) && thisComparators.every((thisComparator) => {
-            return rangeComparators.every((rangeComparator) => {
-              return thisComparator.intersects(rangeComparator, options);
-            });
-          });
-        });
-      });
-    }
-    test(version2) {
-      if (!version2) {
-        return false;
-      }
-      if (typeof version2 === "string") {
-        try {
-          version2 = new SemVer(version2, this.options);
-        } catch (er) {
-          return false;
-        }
-      }
-      for (let i = 0;i < this.set.length; i++) {
-        if (testSet(this.set[i], version2, this.options)) {
-          return true;
-        }
-      }
-      return false;
-    }
-  }
-  module.exports = Range;
-  var LRU = require_lrucache();
-  var cache = new LRU;
-  var parseOptions = require_parse_options();
-  var Comparator = require_comparator();
-  var debug = require_debug();
-  var SemVer = require_semver();
-  var {
-    safeRe: re,
-    t,
-    comparatorTrimReplace,
-    tildeTrimReplace,
-    caretTrimReplace
-  } = require_re();
-  var { FLAG_INCLUDE_PRERELEASE, FLAG_LOOSE } = require_constants6();
-  var isNullSet = (c) => c.value === "<0.0.0-0";
-  var isAny = (c) => c.value === "";
-  var isSatisfiable = (comparators, options) => {
-    let result = true;
-    const remainingComparators = comparators.slice();
-    let testComparator = remainingComparators.pop();
-    while (result && remainingComparators.length) {
-      result = remainingComparators.every((otherComparator) => {
-        return testComparator.intersects(otherComparator, options);
-      });
-      testComparator = remainingComparators.pop();
-    }
-    return result;
-  };
-  var parseComparator = (comp, options) => {
-    comp = comp.replace(re[t.BUILD], "");
-    debug("comp", comp, options);
-    comp = replaceCarets(comp, options);
-    debug("caret", comp);
-    comp = replaceTildes(comp, options);
-    debug("tildes", comp);
-    comp = replaceXRanges(comp, options);
-    debug("xrange", comp);
-    comp = replaceStars(comp, options);
-    debug("stars", comp);
-    return comp;
-  };
-  var isX = (id) => !id || id.toLowerCase() === "x" || id === "*";
-  var replaceTildes = (comp, options) => {
-    return comp.trim().split(/\s+/).map((c) => replaceTilde(c, options)).join(" ");
-  };
-  var replaceTilde = (comp, options) => {
-    const r = options.loose ? re[t.TILDELOOSE] : re[t.TILDE];
-    return comp.replace(r, (_, M, m, p, pr) => {
-      debug("tilde", comp, _, M, m, p, pr);
-      let ret;
-      if (isX(M)) {
-        ret = "";
-      } else if (isX(m)) {
-        ret = `>=${M}.0.0 <${+M + 1}.0.0-0`;
-      } else if (isX(p)) {
-        ret = `>=${M}.${m}.0 <${M}.${+m + 1}.0-0`;
-      } else if (pr) {
-        debug("replaceTilde pr", pr);
-        ret = `>=${M}.${m}.${p}-${pr} <${M}.${+m + 1}.0-0`;
-      } else {
-        ret = `>=${M}.${m}.${p} <${M}.${+m + 1}.0-0`;
-      }
-      debug("tilde return", ret);
-      return ret;
-    });
-  };
-  var replaceCarets = (comp, options) => {
-    return comp.trim().split(/\s+/).map((c) => replaceCaret(c, options)).join(" ");
-  };
-  var replaceCaret = (comp, options) => {
-    debug("caret", comp, options);
-    const r = options.loose ? re[t.CARETLOOSE] : re[t.CARET];
-    const z = options.includePrerelease ? "-0" : "";
-    return comp.replace(r, (_, M, m, p, pr) => {
-      debug("caret", comp, _, M, m, p, pr);
-      let ret;
-      if (isX(M)) {
-        ret = "";
-      } else if (isX(m)) {
-        ret = `>=${M}.0.0${z} <${+M + 1}.0.0-0`;
-      } else if (isX(p)) {
-        if (M === "0") {
-          ret = `>=${M}.${m}.0${z} <${M}.${+m + 1}.0-0`;
-        } else {
-          ret = `>=${M}.${m}.0${z} <${+M + 1}.0.0-0`;
-        }
-      } else if (pr) {
-        debug("replaceCaret pr", pr);
-        if (M === "0") {
-          if (m === "0") {
-            ret = `>=${M}.${m}.${p}-${pr} <${M}.${m}.${+p + 1}-0`;
-          } else {
-            ret = `>=${M}.${m}.${p}-${pr} <${M}.${+m + 1}.0-0`;
-          }
-        } else {
-          ret = `>=${M}.${m}.${p}-${pr} <${+M + 1}.0.0-0`;
-        }
-      } else {
-        debug("no pr");
-        if (M === "0") {
-          if (m === "0") {
-            ret = `>=${M}.${m}.${p}${z} <${M}.${m}.${+p + 1}-0`;
-          } else {
-            ret = `>=${M}.${m}.${p}${z} <${M}.${+m + 1}.0-0`;
-          }
-        } else {
-          ret = `>=${M}.${m}.${p} <${+M + 1}.0.0-0`;
-        }
-      }
-      debug("caret return", ret);
-      return ret;
-    });
-  };
-  var replaceXRanges = (comp, options) => {
-    debug("replaceXRanges", comp, options);
-    return comp.split(/\s+/).map((c) => replaceXRange(c, options)).join(" ");
-  };
-  var replaceXRange = (comp, options) => {
-    comp = comp.trim();
-    const r = options.loose ? re[t.XRANGELOOSE] : re[t.XRANGE];
-    return comp.replace(r, (ret, gtlt, M, m, p, pr) => {
-      debug("xRange", comp, ret, gtlt, M, m, p, pr);
-      const xM = isX(M);
-      const xm = xM || isX(m);
-      const xp = xm || isX(p);
-      const anyX = xp;
-      if (gtlt === "=" && anyX) {
-        gtlt = "";
-      }
-      pr = options.includePrerelease ? "-0" : "";
-      if (xM) {
-        if (gtlt === ">" || gtlt === "<") {
-          ret = "<0.0.0-0";
-        } else {
-          ret = "*";
-        }
-      } else if (gtlt && anyX) {
-        if (xm) {
-          m = 0;
-        }
-        p = 0;
-        if (gtlt === ">") {
-          gtlt = ">=";
-          if (xm) {
-            M = +M + 1;
-            m = 0;
-            p = 0;
-          } else {
-            m = +m + 1;
-            p = 0;
-          }
-        } else if (gtlt === "<=") {
-          gtlt = "<";
-          if (xm) {
-            M = +M + 1;
-          } else {
-            m = +m + 1;
-          }
-        }
-        if (gtlt === "<") {
-          pr = "-0";
-        }
-        ret = `${gtlt + M}.${m}.${p}${pr}`;
-      } else if (xm) {
-        ret = `>=${M}.0.0${pr} <${+M + 1}.0.0-0`;
-      } else if (xp) {
-        ret = `>=${M}.${m}.0${pr} <${M}.${+m + 1}.0-0`;
-      }
-      debug("xRange return", ret);
-      return ret;
-    });
-  };
-  var replaceStars = (comp, options) => {
-    debug("replaceStars", comp, options);
-    return comp.trim().replace(re[t.STAR], "");
-  };
-  var replaceGTE0 = (comp, options) => {
-    debug("replaceGTE0", comp, options);
-    return comp.trim().replace(re[options.includePrerelease ? t.GTE0PRE : t.GTE0], "");
-  };
-  var hyphenReplace = (incPr) => ($0, from, fM, fm, fp, fpr, fb, to, tM, tm, tp, tpr) => {
-    if (isX(fM)) {
-      from = "";
-    } else if (isX(fm)) {
-      from = `>=${fM}.0.0${incPr ? "-0" : ""}`;
-    } else if (isX(fp)) {
-      from = `>=${fM}.${fm}.0${incPr ? "-0" : ""}`;
-    } else if (fpr) {
-      from = `>=${from}`;
-    } else {
-      from = `>=${from}${incPr ? "-0" : ""}`;
-    }
-    if (isX(tM)) {
-      to = "";
-    } else if (isX(tm)) {
-      to = `<${+tM + 1}.0.0-0`;
-    } else if (isX(tp)) {
-      to = `<${tM}.${+tm + 1}.0-0`;
-    } else if (tpr) {
-      to = `<=${tM}.${tm}.${tp}-${tpr}`;
-    } else if (incPr) {
-      to = `<${tM}.${tm}.${+tp + 1}-0`;
-    } else {
-      to = `<=${to}`;
-    }
-    return `${from} ${to}`.trim();
-  };
-  var testSet = (set2, version2, options) => {
-    for (let i = 0;i < set2.length; i++) {
-      if (!set2[i].test(version2)) {
-        return false;
-      }
-    }
-    if (version2.prerelease.length && !options.includePrerelease) {
-      for (let i = 0;i < set2.length; i++) {
-        debug(set2[i].semver);
-        if (set2[i].semver === Comparator.ANY) {
-          continue;
-        }
-        if (set2[i].semver.prerelease.length > 0) {
-          const allowed = set2[i].semver;
-          if (allowed.major === version2.major && allowed.minor === version2.minor && allowed.patch === version2.patch) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-    return true;
-  };
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/classes/comparator.js
-var require_comparator = __commonJS((exports, module) => {
-  var ANY = Symbol("SemVer ANY");
-
-  class Comparator {
-    static get ANY() {
-      return ANY;
-    }
-    constructor(comp, options) {
-      options = parseOptions(options);
-      if (comp instanceof Comparator) {
-        if (comp.loose === !!options.loose) {
-          return comp;
-        } else {
-          comp = comp.value;
-        }
-      }
-      comp = comp.trim().split(/\s+/).join(" ");
-      debug("comparator", comp, options);
-      this.options = options;
-      this.loose = !!options.loose;
-      this.parse(comp);
-      if (this.semver === ANY) {
-        this.value = "";
-      } else {
-        this.value = this.operator + this.semver.version;
-      }
-      debug("comp", this);
-    }
-    parse(comp) {
-      const r = this.options.loose ? re[t.COMPARATORLOOSE] : re[t.COMPARATOR];
-      const m = comp.match(r);
-      if (!m) {
-        throw new TypeError(`Invalid comparator: ${comp}`);
-      }
-      this.operator = m[1] !== undefined ? m[1] : "";
-      if (this.operator === "=") {
-        this.operator = "";
-      }
-      if (!m[2]) {
-        this.semver = ANY;
-      } else {
-        this.semver = new SemVer(m[2], this.options.loose);
-      }
-    }
-    toString() {
-      return this.value;
-    }
-    test(version2) {
-      debug("Comparator.test", version2, this.options.loose);
-      if (this.semver === ANY || version2 === ANY) {
-        return true;
-      }
-      if (typeof version2 === "string") {
-        try {
-          version2 = new SemVer(version2, this.options);
-        } catch (er) {
-          return false;
-        }
-      }
-      return cmp(version2, this.operator, this.semver, this.options);
-    }
-    intersects(comp, options) {
-      if (!(comp instanceof Comparator)) {
-        throw new TypeError("a Comparator is required");
-      }
-      if (this.operator === "") {
-        if (this.value === "") {
-          return true;
-        }
-        return new Range(comp.value, options).test(this.value);
-      } else if (comp.operator === "") {
-        if (comp.value === "") {
-          return true;
-        }
-        return new Range(this.value, options).test(comp.semver);
-      }
-      options = parseOptions(options);
-      if (options.includePrerelease && (this.value === "<0.0.0-0" || comp.value === "<0.0.0-0")) {
-        return false;
-      }
-      if (!options.includePrerelease && (this.value.startsWith("<0.0.0") || comp.value.startsWith("<0.0.0"))) {
-        return false;
-      }
-      if (this.operator.startsWith(">") && comp.operator.startsWith(">")) {
-        return true;
-      }
-      if (this.operator.startsWith("<") && comp.operator.startsWith("<")) {
-        return true;
-      }
-      if (this.semver.version === comp.semver.version && this.operator.includes("=") && comp.operator.includes("=")) {
-        return true;
-      }
-      if (cmp(this.semver, "<", comp.semver, options) && this.operator.startsWith(">") && comp.operator.startsWith("<")) {
-        return true;
-      }
-      if (cmp(this.semver, ">", comp.semver, options) && this.operator.startsWith("<") && comp.operator.startsWith(">")) {
-        return true;
-      }
-      return false;
-    }
-  }
-  module.exports = Comparator;
-  var parseOptions = require_parse_options();
-  var { safeRe: re, t } = require_re();
-  var cmp = require_cmp();
-  var debug = require_debug();
-  var SemVer = require_semver();
-  var Range = require_range();
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/functions/satisfies.js
-var require_satisfies = __commonJS((exports, module) => {
-  var Range = require_range();
-  var satisfies = (version2, range, options) => {
-    try {
-      range = new Range(range, options);
-    } catch (er) {
-      return false;
-    }
-    return range.test(version2);
-  };
-  module.exports = satisfies;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/ranges/to-comparators.js
-var require_to_comparators = __commonJS((exports, module) => {
-  var Range = require_range();
-  var toComparators = (range, options) => new Range(range, options).set.map((comp) => comp.map((c) => c.value).join(" ").trim().split(" "));
-  module.exports = toComparators;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/ranges/max-satisfying.js
-var require_max_satisfying = __commonJS((exports, module) => {
-  var SemVer = require_semver();
-  var Range = require_range();
-  var maxSatisfying = (versions2, range, options) => {
-    let max = null;
-    let maxSV = null;
-    let rangeObj = null;
-    try {
-      rangeObj = new Range(range, options);
-    } catch (er) {
-      return null;
-    }
-    versions2.forEach((v) => {
-      if (rangeObj.test(v)) {
-        if (!max || maxSV.compare(v) === -1) {
-          max = v;
-          maxSV = new SemVer(max, options);
-        }
-      }
-    });
-    return max;
-  };
-  module.exports = maxSatisfying;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/ranges/min-satisfying.js
-var require_min_satisfying = __commonJS((exports, module) => {
-  var SemVer = require_semver();
-  var Range = require_range();
-  var minSatisfying = (versions2, range, options) => {
-    let min = null;
-    let minSV = null;
-    let rangeObj = null;
-    try {
-      rangeObj = new Range(range, options);
-    } catch (er) {
-      return null;
-    }
-    versions2.forEach((v) => {
-      if (rangeObj.test(v)) {
-        if (!min || minSV.compare(v) === 1) {
-          min = v;
-          minSV = new SemVer(min, options);
-        }
-      }
-    });
-    return min;
-  };
-  module.exports = minSatisfying;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/ranges/min-version.js
-var require_min_version = __commonJS((exports, module) => {
-  var SemVer = require_semver();
-  var Range = require_range();
-  var gt = require_gt();
-  var minVersion = (range, loose) => {
-    range = new Range(range, loose);
-    let minver = new SemVer("0.0.0");
-    if (range.test(minver)) {
-      return minver;
-    }
-    minver = new SemVer("0.0.0-0");
-    if (range.test(minver)) {
-      return minver;
-    }
-    minver = null;
-    for (let i = 0;i < range.set.length; ++i) {
-      const comparators = range.set[i];
-      let setMin = null;
-      comparators.forEach((comparator) => {
-        const compver = new SemVer(comparator.semver.version);
-        switch (comparator.operator) {
-          case ">":
-            if (compver.prerelease.length === 0) {
-              compver.patch++;
-            } else {
-              compver.prerelease.push(0);
-            }
-            compver.raw = compver.format();
-          case "":
-          case ">=":
-            if (!setMin || gt(compver, setMin)) {
-              setMin = compver;
-            }
-            break;
-          case "<":
-          case "<=":
-            break;
-          default:
-            throw new Error(`Unexpected operation: ${comparator.operator}`);
-        }
-      });
-      if (setMin && (!minver || gt(minver, setMin))) {
-        minver = setMin;
-      }
-    }
-    if (minver && range.test(minver)) {
-      return minver;
-    }
-    return null;
-  };
-  module.exports = minVersion;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/ranges/valid.js
-var require_valid2 = __commonJS((exports, module) => {
-  var Range = require_range();
-  var validRange = (range, options) => {
-    try {
-      return new Range(range, options).range || "*";
-    } catch (er) {
-      return null;
-    }
-  };
-  module.exports = validRange;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/ranges/outside.js
-var require_outside = __commonJS((exports, module) => {
-  var SemVer = require_semver();
-  var Comparator = require_comparator();
-  var { ANY } = Comparator;
-  var Range = require_range();
-  var satisfies = require_satisfies();
-  var gt = require_gt();
-  var lt = require_lt();
-  var lte = require_lte();
-  var gte = require_gte();
-  var outside = (version2, range, hilo, options) => {
-    version2 = new SemVer(version2, options);
-    range = new Range(range, options);
-    let gtfn, ltefn, ltfn, comp, ecomp;
-    switch (hilo) {
-      case ">":
-        gtfn = gt;
-        ltefn = lte;
-        ltfn = lt;
-        comp = ">";
-        ecomp = ">=";
-        break;
-      case "<":
-        gtfn = lt;
-        ltefn = gte;
-        ltfn = gt;
-        comp = "<";
-        ecomp = "<=";
-        break;
-      default:
-        throw new TypeError('Must provide a hilo val of "<" or ">"');
-    }
-    if (satisfies(version2, range, options)) {
-      return false;
-    }
-    for (let i = 0;i < range.set.length; ++i) {
-      const comparators = range.set[i];
-      let high = null;
-      let low = null;
-      comparators.forEach((comparator) => {
-        if (comparator.semver === ANY) {
-          comparator = new Comparator(">=0.0.0");
-        }
-        high = high || comparator;
-        low = low || comparator;
-        if (gtfn(comparator.semver, high.semver, options)) {
-          high = comparator;
-        } else if (ltfn(comparator.semver, low.semver, options)) {
-          low = comparator;
-        }
-      });
-      if (high.operator === comp || high.operator === ecomp) {
-        return false;
-      }
-      if ((!low.operator || low.operator === comp) && ltefn(version2, low.semver)) {
-        return false;
-      } else if (low.operator === ecomp && ltfn(version2, low.semver)) {
-        return false;
-      }
-    }
-    return true;
-  };
-  module.exports = outside;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/ranges/gtr.js
-var require_gtr = __commonJS((exports, module) => {
-  var outside = require_outside();
-  var gtr = (version2, range, options) => outside(version2, range, ">", options);
-  module.exports = gtr;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/ranges/ltr.js
-var require_ltr = __commonJS((exports, module) => {
-  var outside = require_outside();
-  var ltr = (version2, range, options) => outside(version2, range, "<", options);
-  module.exports = ltr;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/ranges/intersects.js
-var require_intersects = __commonJS((exports, module) => {
-  var Range = require_range();
-  var intersects = (r1, r2, options) => {
-    r1 = new Range(r1, options);
-    r2 = new Range(r2, options);
-    return r1.intersects(r2, options);
-  };
-  module.exports = intersects;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/ranges/simplify.js
-var require_simplify = __commonJS((exports, module) => {
-  var satisfies = require_satisfies();
-  var compare = require_compare();
-  module.exports = (versions2, range, options) => {
-    const set2 = [];
-    let first = null;
-    let prev = null;
-    const v = versions2.sort((a, b) => compare(a, b, options));
-    for (const version2 of v) {
-      const included = satisfies(version2, range, options);
-      if (included) {
-        prev = version2;
-        if (!first) {
-          first = version2;
-        }
-      } else {
-        if (prev) {
-          set2.push([first, prev]);
-        }
-        prev = null;
-        first = null;
-      }
-    }
-    if (first) {
-      set2.push([first, null]);
-    }
-    const ranges = [];
-    for (const [min, max] of set2) {
-      if (min === max) {
-        ranges.push(min);
-      } else if (!max && min === v[0]) {
-        ranges.push("*");
-      } else if (!max) {
-        ranges.push(`>=${min}`);
-      } else if (min === v[0]) {
-        ranges.push(`<=${max}`);
-      } else {
-        ranges.push(`${min} - ${max}`);
-      }
-    }
-    const simplified = ranges.join(" || ");
-    const original = typeof range.raw === "string" ? range.raw : String(range);
-    return simplified.length < original.length ? simplified : range;
-  };
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/ranges/subset.js
-var require_subset = __commonJS((exports, module) => {
-  var Range = require_range();
-  var Comparator = require_comparator();
-  var { ANY } = Comparator;
-  var satisfies = require_satisfies();
-  var compare = require_compare();
-  var subset = (sub, dom, options = {}) => {
-    if (sub === dom) {
-      return true;
-    }
-    sub = new Range(sub, options);
-    dom = new Range(dom, options);
-    let sawNonNull = false;
-    OUTER:
-      for (const simpleSub of sub.set) {
-        for (const simpleDom of dom.set) {
-          const isSub = simpleSubset(simpleSub, simpleDom, options);
-          sawNonNull = sawNonNull || isSub !== null;
-          if (isSub) {
-            continue OUTER;
-          }
-        }
-        if (sawNonNull) {
-          return false;
-        }
-      }
-    return true;
-  };
-  var minimumVersionWithPreRelease = [new Comparator(">=0.0.0-0")];
-  var minimumVersion = [new Comparator(">=0.0.0")];
-  var simpleSubset = (sub, dom, options) => {
-    if (sub === dom) {
-      return true;
-    }
-    if (sub.length === 1 && sub[0].semver === ANY) {
-      if (dom.length === 1 && dom[0].semver === ANY) {
-        return true;
-      } else if (options.includePrerelease) {
-        sub = minimumVersionWithPreRelease;
-      } else {
-        sub = minimumVersion;
-      }
-    }
-    if (dom.length === 1 && dom[0].semver === ANY) {
-      if (options.includePrerelease) {
-        return true;
-      } else {
-        dom = minimumVersion;
-      }
-    }
-    const eqSet = new Set;
-    let gt, lt;
-    for (const c of sub) {
-      if (c.operator === ">" || c.operator === ">=") {
-        gt = higherGT(gt, c, options);
-      } else if (c.operator === "<" || c.operator === "<=") {
-        lt = lowerLT(lt, c, options);
-      } else {
-        eqSet.add(c.semver);
-      }
-    }
-    if (eqSet.size > 1) {
-      return null;
-    }
-    let gtltComp;
-    if (gt && lt) {
-      gtltComp = compare(gt.semver, lt.semver, options);
-      if (gtltComp > 0) {
-        return null;
-      } else if (gtltComp === 0 && (gt.operator !== ">=" || lt.operator !== "<=")) {
-        return null;
-      }
-    }
-    for (const eq of eqSet) {
-      if (gt && !satisfies(eq, String(gt), options)) {
-        return null;
-      }
-      if (lt && !satisfies(eq, String(lt), options)) {
-        return null;
-      }
-      for (const c of dom) {
-        if (!satisfies(eq, String(c), options)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    let higher, lower;
-    let hasDomLT, hasDomGT;
-    let needDomLTPre = lt && !options.includePrerelease && lt.semver.prerelease.length ? lt.semver : false;
-    let needDomGTPre = gt && !options.includePrerelease && gt.semver.prerelease.length ? gt.semver : false;
-    if (needDomLTPre && needDomLTPre.prerelease.length === 1 && lt.operator === "<" && needDomLTPre.prerelease[0] === 0) {
-      needDomLTPre = false;
-    }
-    for (const c of dom) {
-      hasDomGT = hasDomGT || c.operator === ">" || c.operator === ">=";
-      hasDomLT = hasDomLT || c.operator === "<" || c.operator === "<=";
-      if (gt) {
-        if (needDomGTPre) {
-          if (c.semver.prerelease && c.semver.prerelease.length && c.semver.major === needDomGTPre.major && c.semver.minor === needDomGTPre.minor && c.semver.patch === needDomGTPre.patch) {
-            needDomGTPre = false;
-          }
-        }
-        if (c.operator === ">" || c.operator === ">=") {
-          higher = higherGT(gt, c, options);
-          if (higher === c && higher !== gt) {
-            return false;
-          }
-        } else if (gt.operator === ">=" && !satisfies(gt.semver, String(c), options)) {
-          return false;
-        }
-      }
-      if (lt) {
-        if (needDomLTPre) {
-          if (c.semver.prerelease && c.semver.prerelease.length && c.semver.major === needDomLTPre.major && c.semver.minor === needDomLTPre.minor && c.semver.patch === needDomLTPre.patch) {
-            needDomLTPre = false;
-          }
-        }
-        if (c.operator === "<" || c.operator === "<=") {
-          lower = lowerLT(lt, c, options);
-          if (lower === c && lower !== lt) {
-            return false;
-          }
-        } else if (lt.operator === "<=" && !satisfies(lt.semver, String(c), options)) {
-          return false;
-        }
-      }
-      if (!c.operator && (lt || gt) && gtltComp !== 0) {
-        return false;
-      }
-    }
-    if (gt && hasDomLT && !lt && gtltComp !== 0) {
-      return false;
-    }
-    if (lt && hasDomGT && !gt && gtltComp !== 0) {
-      return false;
-    }
-    if (needDomGTPre || needDomLTPre) {
-      return false;
-    }
-    return true;
-  };
-  var higherGT = (a, b, options) => {
-    if (!a) {
-      return b;
-    }
-    const comp = compare(a.semver, b.semver, options);
-    return comp > 0 ? a : comp < 0 ? b : b.operator === ">" && a.operator === ">=" ? b : a;
-  };
-  var lowerLT = (a, b, options) => {
-    if (!a) {
-      return b;
-    }
-    const comp = compare(a.semver, b.semver, options);
-    return comp < 0 ? a : comp > 0 ? b : b.operator === "<" && a.operator === "<=" ? b : a;
-  };
-  module.exports = subset;
-});
-
-// ../node_modules/.bun/semver@7.7.3/node_modules/semver/index.js
-var require_semver2 = __commonJS((exports, module) => {
-  var internalRe = require_re();
-  var constants = require_constants6();
-  var SemVer = require_semver();
-  var identifiers = require_identifiers();
-  var parse5 = require_parse2();
-  var valid = require_valid();
-  var clean = require_clean();
-  var inc = require_inc();
-  var diff = require_diff();
-  var major = require_major();
-  var minor = require_minor();
-  var patch = require_patch();
-  var prerelease = require_prerelease();
-  var compare = require_compare();
-  var rcompare = require_rcompare();
-  var compareLoose = require_compare_loose();
-  var compareBuild = require_compare_build();
-  var sort = require_sort();
-  var rsort = require_rsort();
-  var gt = require_gt();
-  var lt = require_lt();
-  var eq = require_eq();
-  var neq = require_neq();
-  var gte = require_gte();
-  var lte = require_lte();
-  var cmp = require_cmp();
-  var coerce = require_coerce();
-  var Comparator = require_comparator();
-  var Range = require_range();
-  var satisfies = require_satisfies();
-  var toComparators = require_to_comparators();
-  var maxSatisfying = require_max_satisfying();
-  var minSatisfying = require_min_satisfying();
-  var minVersion = require_min_version();
-  var validRange = require_valid2();
-  var outside = require_outside();
-  var gtr = require_gtr();
-  var ltr = require_ltr();
-  var intersects = require_intersects();
-  var simplifyRange = require_simplify();
-  var subset = require_subset();
-  module.exports = {
-    parse: parse5,
-    valid,
-    clean,
-    inc,
-    diff,
-    major,
-    minor,
-    patch,
-    prerelease,
-    compare,
-    rcompare,
-    compareLoose,
-    compareBuild,
-    sort,
-    rsort,
-    gt,
-    lt,
-    eq,
-    neq,
-    gte,
-    lte,
-    cmp,
-    coerce,
-    Comparator,
-    Range,
-    satisfies,
-    toComparators,
-    maxSatisfying,
-    minSatisfying,
-    minVersion,
-    validRange,
-    outside,
-    gtr,
-    ltr,
-    intersects,
-    simplifyRange,
-    subset,
-    SemVer,
-    re: internalRe.re,
-    src: internalRe.src,
-    tokens: internalRe.t,
-    SEMVER_SPEC_VERSION: constants.SEMVER_SPEC_VERSION,
-    RELEASE_TYPES: constants.RELEASE_TYPES,
-    compareIdentifiers: identifiers.compareIdentifiers,
-    rcompareIdentifiers: identifiers.rcompareIdentifiers
-  };
-});
-
 // ../node_modules/.bun/@actions+http-client@3.0.0/node_modules/@actions/http-client/lib/proxy.js
 var require_proxy2 = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: true });
@@ -20592,7 +18809,7 @@ var require_proxy2 = __commonJS((exports) => {
     if (proxyVar) {
       try {
         return new DecodedURL(proxyVar);
-      } catch (_a2) {
+      } catch (_a3) {
         if (!proxyVar.startsWith("http://") && !proxyVar.startsWith("https://"))
           return new DecodedURL(`http://${proxyVar}`);
       }
@@ -21118,7 +19335,7 @@ var require_lib2 = __commonJS((exports) => {
       }
       return lowercaseKeys(headers || {});
     }
-    _getExistingOrDefaultHeader(additionalHeaders, header2, _default3) {
+    _getExistingOrDefaultHeader(additionalHeaders, header2, _default4) {
       let clientHeader;
       if (this.requestOptions && this.requestOptions.headers) {
         const headerValue = lowercaseKeys(this.requestOptions.headers)[header2];
@@ -21133,9 +19350,9 @@ var require_lib2 = __commonJS((exports) => {
       if (clientHeader !== undefined) {
         return clientHeader;
       }
-      return _default3;
+      return _default4;
     }
-    _getExistingOrDefaultContentTypeHeader(additionalHeaders, _default3) {
+    _getExistingOrDefaultContentTypeHeader(additionalHeaders, _default4) {
       let clientHeader;
       if (this.requestOptions && this.requestOptions.headers) {
         const headerValue = lowercaseKeys(this.requestOptions.headers)[Headers.ContentType];
@@ -21162,7 +19379,7 @@ var require_lib2 = __commonJS((exports) => {
       if (clientHeader !== undefined) {
         return clientHeader;
       }
-      return _default3;
+      return _default4;
     }
     _getAgent(parsedUrl) {
       let agent;
@@ -21397,9 +19614,1729 @@ var require_auth2 = __commonJS((exports) => {
 // src/index.ts
 var core3 = __toESM(require_core(), 1);
 
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/classic/external.js
+// ../api/dist/index.js
+var __create2 = Object.create;
+var __getProtoOf2 = Object.getPrototypeOf;
+var __defProp2 = Object.defineProperty;
+var __getOwnPropNames2 = Object.getOwnPropertyNames;
+var __hasOwnProp2 = Object.prototype.hasOwnProperty;
+var __toESM2 = (mod, isNodeMode, target) => {
+  target = mod != null ? __create2(__getProtoOf2(mod)) : {};
+  const to = isNodeMode || !mod || !mod.__esModule ? __defProp2(target, "default", { value: mod, enumerable: true }) : target;
+  for (let key of __getOwnPropNames2(mod))
+    if (!__hasOwnProp2.call(to, key))
+      __defProp2(to, key, {
+        get: () => mod[key],
+        enumerable: true
+      });
+  return to;
+};
+var __commonJS2 = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
+var __export2 = (target, all) => {
+  for (var name in all)
+    __defProp2(target, name, {
+      get: all[name],
+      enumerable: true,
+      configurable: true,
+      set: (newValue) => all[name] = () => newValue
+    });
+};
+var require_constants6 = __commonJS2((exports, module) => {
+  var SEMVER_SPEC_VERSION = "2.0.0";
+  var MAX_LENGTH = 256;
+  var MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER || 9007199254740991;
+  var MAX_SAFE_COMPONENT_LENGTH = 16;
+  var MAX_SAFE_BUILD_LENGTH = MAX_LENGTH - 6;
+  var RELEASE_TYPES = [
+    "major",
+    "premajor",
+    "minor",
+    "preminor",
+    "patch",
+    "prepatch",
+    "prerelease"
+  ];
+  module.exports = {
+    MAX_LENGTH,
+    MAX_SAFE_COMPONENT_LENGTH,
+    MAX_SAFE_BUILD_LENGTH,
+    MAX_SAFE_INTEGER,
+    RELEASE_TYPES,
+    SEMVER_SPEC_VERSION,
+    FLAG_INCLUDE_PRERELEASE: 1,
+    FLAG_LOOSE: 2
+  };
+});
+var require_debug = __commonJS2((exports, module) => {
+  var debug = typeof process === "object" && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG) ? (...args) => console.error("SEMVER", ...args) : () => {};
+  module.exports = debug;
+});
+var require_re = __commonJS2((exports, module) => {
+  var {
+    MAX_SAFE_COMPONENT_LENGTH,
+    MAX_SAFE_BUILD_LENGTH,
+    MAX_LENGTH
+  } = require_constants6();
+  var debug = require_debug();
+  exports = module.exports = {};
+  var re = exports.re = [];
+  var safeRe = exports.safeRe = [];
+  var src = exports.src = [];
+  var safeSrc = exports.safeSrc = [];
+  var t = exports.t = {};
+  var R = 0;
+  var LETTERDASHNUMBER = "[a-zA-Z0-9-]";
+  var safeRegexReplacements = [
+    ["\\s", 1],
+    ["\\d", MAX_LENGTH],
+    [LETTERDASHNUMBER, MAX_SAFE_BUILD_LENGTH]
+  ];
+  var makeSafeRegex = (value) => {
+    for (const [token, max] of safeRegexReplacements) {
+      value = value.split(`${token}*`).join(`${token}{0,${max}}`).split(`${token}+`).join(`${token}{1,${max}}`);
+    }
+    return value;
+  };
+  var createToken = (name, value, isGlobal) => {
+    const safe = makeSafeRegex(value);
+    const index = R++;
+    debug(name, index, value);
+    t[name] = index;
+    src[index] = value;
+    safeSrc[index] = safe;
+    re[index] = new RegExp(value, isGlobal ? "g" : undefined);
+    safeRe[index] = new RegExp(safe, isGlobal ? "g" : undefined);
+  };
+  createToken("NUMERICIDENTIFIER", "0|[1-9]\\d*");
+  createToken("NUMERICIDENTIFIERLOOSE", "\\d+");
+  createToken("NONNUMERICIDENTIFIER", `\\d*[a-zA-Z-]${LETTERDASHNUMBER}*`);
+  createToken("MAINVERSION", `(${src[t.NUMERICIDENTIFIER]})\\.` + `(${src[t.NUMERICIDENTIFIER]})\\.` + `(${src[t.NUMERICIDENTIFIER]})`);
+  createToken("MAINVERSIONLOOSE", `(${src[t.NUMERICIDENTIFIERLOOSE]})\\.` + `(${src[t.NUMERICIDENTIFIERLOOSE]})\\.` + `(${src[t.NUMERICIDENTIFIERLOOSE]})`);
+  createToken("PRERELEASEIDENTIFIER", `(?:${src[t.NONNUMERICIDENTIFIER]}|${src[t.NUMERICIDENTIFIER]})`);
+  createToken("PRERELEASEIDENTIFIERLOOSE", `(?:${src[t.NONNUMERICIDENTIFIER]}|${src[t.NUMERICIDENTIFIERLOOSE]})`);
+  createToken("PRERELEASE", `(?:-(${src[t.PRERELEASEIDENTIFIER]}(?:\\.${src[t.PRERELEASEIDENTIFIER]})*))`);
+  createToken("PRERELEASELOOSE", `(?:-?(${src[t.PRERELEASEIDENTIFIERLOOSE]}(?:\\.${src[t.PRERELEASEIDENTIFIERLOOSE]})*))`);
+  createToken("BUILDIDENTIFIER", `${LETTERDASHNUMBER}+`);
+  createToken("BUILD", `(?:\\+(${src[t.BUILDIDENTIFIER]}(?:\\.${src[t.BUILDIDENTIFIER]})*))`);
+  createToken("FULLPLAIN", `v?${src[t.MAINVERSION]}${src[t.PRERELEASE]}?${src[t.BUILD]}?`);
+  createToken("FULL", `^${src[t.FULLPLAIN]}$`);
+  createToken("LOOSEPLAIN", `[v=\\s]*${src[t.MAINVERSIONLOOSE]}${src[t.PRERELEASELOOSE]}?${src[t.BUILD]}?`);
+  createToken("LOOSE", `^${src[t.LOOSEPLAIN]}$`);
+  createToken("GTLT", "((?:<|>)?=?)");
+  createToken("XRANGEIDENTIFIERLOOSE", `${src[t.NUMERICIDENTIFIERLOOSE]}|x|X|\\*`);
+  createToken("XRANGEIDENTIFIER", `${src[t.NUMERICIDENTIFIER]}|x|X|\\*`);
+  createToken("XRANGEPLAIN", `[v=\\s]*(${src[t.XRANGEIDENTIFIER]})` + `(?:\\.(${src[t.XRANGEIDENTIFIER]})` + `(?:\\.(${src[t.XRANGEIDENTIFIER]})` + `(?:${src[t.PRERELEASE]})?${src[t.BUILD]}?` + `)?)?`);
+  createToken("XRANGEPLAINLOOSE", `[v=\\s]*(${src[t.XRANGEIDENTIFIERLOOSE]})` + `(?:\\.(${src[t.XRANGEIDENTIFIERLOOSE]})` + `(?:\\.(${src[t.XRANGEIDENTIFIERLOOSE]})` + `(?:${src[t.PRERELEASELOOSE]})?${src[t.BUILD]}?` + `)?)?`);
+  createToken("XRANGE", `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAIN]}$`);
+  createToken("XRANGELOOSE", `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAINLOOSE]}$`);
+  createToken("COERCEPLAIN", `${"(^|[^\\d])" + "(\\d{1,"}${MAX_SAFE_COMPONENT_LENGTH}})` + `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?` + `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?`);
+  createToken("COERCE", `${src[t.COERCEPLAIN]}(?:$|[^\\d])`);
+  createToken("COERCEFULL", src[t.COERCEPLAIN] + `(?:${src[t.PRERELEASE]})?` + `(?:${src[t.BUILD]})?` + `(?:$|[^\\d])`);
+  createToken("COERCERTL", src[t.COERCE], true);
+  createToken("COERCERTLFULL", src[t.COERCEFULL], true);
+  createToken("LONETILDE", "(?:~>?)");
+  createToken("TILDETRIM", `(\\s*)${src[t.LONETILDE]}\\s+`, true);
+  exports.tildeTrimReplace = "$1~";
+  createToken("TILDE", `^${src[t.LONETILDE]}${src[t.XRANGEPLAIN]}$`);
+  createToken("TILDELOOSE", `^${src[t.LONETILDE]}${src[t.XRANGEPLAINLOOSE]}$`);
+  createToken("LONECARET", "(?:\\^)");
+  createToken("CARETTRIM", `(\\s*)${src[t.LONECARET]}\\s+`, true);
+  exports.caretTrimReplace = "$1^";
+  createToken("CARET", `^${src[t.LONECARET]}${src[t.XRANGEPLAIN]}$`);
+  createToken("CARETLOOSE", `^${src[t.LONECARET]}${src[t.XRANGEPLAINLOOSE]}$`);
+  createToken("COMPARATORLOOSE", `^${src[t.GTLT]}\\s*(${src[t.LOOSEPLAIN]})$|^$`);
+  createToken("COMPARATOR", `^${src[t.GTLT]}\\s*(${src[t.FULLPLAIN]})$|^$`);
+  createToken("COMPARATORTRIM", `(\\s*)${src[t.GTLT]}\\s*(${src[t.LOOSEPLAIN]}|${src[t.XRANGEPLAIN]})`, true);
+  exports.comparatorTrimReplace = "$1$2$3";
+  createToken("HYPHENRANGE", `^\\s*(${src[t.XRANGEPLAIN]})` + `\\s+-\\s+` + `(${src[t.XRANGEPLAIN]})` + `\\s*$`);
+  createToken("HYPHENRANGELOOSE", `^\\s*(${src[t.XRANGEPLAINLOOSE]})` + `\\s+-\\s+` + `(${src[t.XRANGEPLAINLOOSE]})` + `\\s*$`);
+  createToken("STAR", "(<|>)?=?\\s*\\*");
+  createToken("GTE0", "^\\s*>=\\s*0\\.0\\.0\\s*$");
+  createToken("GTE0PRE", "^\\s*>=\\s*0\\.0\\.0-0\\s*$");
+});
+var require_parse_options = __commonJS2((exports, module) => {
+  var looseOption = Object.freeze({ loose: true });
+  var emptyOpts = Object.freeze({});
+  var parseOptions = (options) => {
+    if (!options) {
+      return emptyOpts;
+    }
+    if (typeof options !== "object") {
+      return looseOption;
+    }
+    return options;
+  };
+  module.exports = parseOptions;
+});
+var require_identifiers = __commonJS2((exports, module) => {
+  var numeric = /^[0-9]+$/;
+  var compareIdentifiers = (a, b) => {
+    if (typeof a === "number" && typeof b === "number") {
+      return a === b ? 0 : a < b ? -1 : 1;
+    }
+    const anum = numeric.test(a);
+    const bnum = numeric.test(b);
+    if (anum && bnum) {
+      a = +a;
+      b = +b;
+    }
+    return a === b ? 0 : anum && !bnum ? -1 : bnum && !anum ? 1 : a < b ? -1 : 1;
+  };
+  var rcompareIdentifiers = (a, b) => compareIdentifiers(b, a);
+  module.exports = {
+    compareIdentifiers,
+    rcompareIdentifiers
+  };
+});
+var require_semver = __commonJS2((exports, module) => {
+  var debug = require_debug();
+  var { MAX_LENGTH, MAX_SAFE_INTEGER } = require_constants6();
+  var { safeRe: re, t } = require_re();
+  var parseOptions = require_parse_options();
+  var { compareIdentifiers } = require_identifiers();
+
+  class SemVer {
+    constructor(version2, options) {
+      options = parseOptions(options);
+      if (version2 instanceof SemVer) {
+        if (version2.loose === !!options.loose && version2.includePrerelease === !!options.includePrerelease) {
+          return version2;
+        } else {
+          version2 = version2.version;
+        }
+      } else if (typeof version2 !== "string") {
+        throw new TypeError(`Invalid version. Must be a string. Got type "${typeof version2}".`);
+      }
+      if (version2.length > MAX_LENGTH) {
+        throw new TypeError(`version is longer than ${MAX_LENGTH} characters`);
+      }
+      debug("SemVer", version2, options);
+      this.options = options;
+      this.loose = !!options.loose;
+      this.includePrerelease = !!options.includePrerelease;
+      const m = version2.trim().match(options.loose ? re[t.LOOSE] : re[t.FULL]);
+      if (!m) {
+        throw new TypeError(`Invalid Version: ${version2}`);
+      }
+      this.raw = version2;
+      this.major = +m[1];
+      this.minor = +m[2];
+      this.patch = +m[3];
+      if (this.major > MAX_SAFE_INTEGER || this.major < 0) {
+        throw new TypeError("Invalid major version");
+      }
+      if (this.minor > MAX_SAFE_INTEGER || this.minor < 0) {
+        throw new TypeError("Invalid minor version");
+      }
+      if (this.patch > MAX_SAFE_INTEGER || this.patch < 0) {
+        throw new TypeError("Invalid patch version");
+      }
+      if (!m[4]) {
+        this.prerelease = [];
+      } else {
+        this.prerelease = m[4].split(".").map((id) => {
+          if (/^[0-9]+$/.test(id)) {
+            const num = +id;
+            if (num >= 0 && num < MAX_SAFE_INTEGER) {
+              return num;
+            }
+          }
+          return id;
+        });
+      }
+      this.build = m[5] ? m[5].split(".") : [];
+      this.format();
+    }
+    format() {
+      this.version = `${this.major}.${this.minor}.${this.patch}`;
+      if (this.prerelease.length) {
+        this.version += `-${this.prerelease.join(".")}`;
+      }
+      return this.version;
+    }
+    toString() {
+      return this.version;
+    }
+    compare(other) {
+      debug("SemVer.compare", this.version, this.options, other);
+      if (!(other instanceof SemVer)) {
+        if (typeof other === "string" && other === this.version) {
+          return 0;
+        }
+        other = new SemVer(other, this.options);
+      }
+      if (other.version === this.version) {
+        return 0;
+      }
+      return this.compareMain(other) || this.comparePre(other);
+    }
+    compareMain(other) {
+      if (!(other instanceof SemVer)) {
+        other = new SemVer(other, this.options);
+      }
+      if (this.major < other.major) {
+        return -1;
+      }
+      if (this.major > other.major) {
+        return 1;
+      }
+      if (this.minor < other.minor) {
+        return -1;
+      }
+      if (this.minor > other.minor) {
+        return 1;
+      }
+      if (this.patch < other.patch) {
+        return -1;
+      }
+      if (this.patch > other.patch) {
+        return 1;
+      }
+      return 0;
+    }
+    comparePre(other) {
+      if (!(other instanceof SemVer)) {
+        other = new SemVer(other, this.options);
+      }
+      if (this.prerelease.length && !other.prerelease.length) {
+        return -1;
+      } else if (!this.prerelease.length && other.prerelease.length) {
+        return 1;
+      } else if (!this.prerelease.length && !other.prerelease.length) {
+        return 0;
+      }
+      let i = 0;
+      do {
+        const a = this.prerelease[i];
+        const b = other.prerelease[i];
+        debug("prerelease compare", i, a, b);
+        if (a === undefined && b === undefined) {
+          return 0;
+        } else if (b === undefined) {
+          return 1;
+        } else if (a === undefined) {
+          return -1;
+        } else if (a === b) {
+          continue;
+        } else {
+          return compareIdentifiers(a, b);
+        }
+      } while (++i);
+    }
+    compareBuild(other) {
+      if (!(other instanceof SemVer)) {
+        other = new SemVer(other, this.options);
+      }
+      let i = 0;
+      do {
+        const a = this.build[i];
+        const b = other.build[i];
+        debug("build compare", i, a, b);
+        if (a === undefined && b === undefined) {
+          return 0;
+        } else if (b === undefined) {
+          return 1;
+        } else if (a === undefined) {
+          return -1;
+        } else if (a === b) {
+          continue;
+        } else {
+          return compareIdentifiers(a, b);
+        }
+      } while (++i);
+    }
+    inc(release, identifier, identifierBase) {
+      if (release.startsWith("pre")) {
+        if (!identifier && identifierBase === false) {
+          throw new Error("invalid increment argument: identifier is empty");
+        }
+        if (identifier) {
+          const match = `-${identifier}`.match(this.options.loose ? re[t.PRERELEASELOOSE] : re[t.PRERELEASE]);
+          if (!match || match[1] !== identifier) {
+            throw new Error(`invalid identifier: ${identifier}`);
+          }
+        }
+      }
+      switch (release) {
+        case "premajor":
+          this.prerelease.length = 0;
+          this.patch = 0;
+          this.minor = 0;
+          this.major++;
+          this.inc("pre", identifier, identifierBase);
+          break;
+        case "preminor":
+          this.prerelease.length = 0;
+          this.patch = 0;
+          this.minor++;
+          this.inc("pre", identifier, identifierBase);
+          break;
+        case "prepatch":
+          this.prerelease.length = 0;
+          this.inc("patch", identifier, identifierBase);
+          this.inc("pre", identifier, identifierBase);
+          break;
+        case "prerelease":
+          if (this.prerelease.length === 0) {
+            this.inc("patch", identifier, identifierBase);
+          }
+          this.inc("pre", identifier, identifierBase);
+          break;
+        case "release":
+          if (this.prerelease.length === 0) {
+            throw new Error(`version ${this.raw} is not a prerelease`);
+          }
+          this.prerelease.length = 0;
+          break;
+        case "major":
+          if (this.minor !== 0 || this.patch !== 0 || this.prerelease.length === 0) {
+            this.major++;
+          }
+          this.minor = 0;
+          this.patch = 0;
+          this.prerelease = [];
+          break;
+        case "minor":
+          if (this.patch !== 0 || this.prerelease.length === 0) {
+            this.minor++;
+          }
+          this.patch = 0;
+          this.prerelease = [];
+          break;
+        case "patch":
+          if (this.prerelease.length === 0) {
+            this.patch++;
+          }
+          this.prerelease = [];
+          break;
+        case "pre": {
+          const base = Number(identifierBase) ? 1 : 0;
+          if (this.prerelease.length === 0) {
+            this.prerelease = [base];
+          } else {
+            let i = this.prerelease.length;
+            while (--i >= 0) {
+              if (typeof this.prerelease[i] === "number") {
+                this.prerelease[i]++;
+                i = -2;
+              }
+            }
+            if (i === -1) {
+              if (identifier === this.prerelease.join(".") && identifierBase === false) {
+                throw new Error("invalid increment argument: identifier already exists");
+              }
+              this.prerelease.push(base);
+            }
+          }
+          if (identifier) {
+            let prerelease = [identifier, base];
+            if (identifierBase === false) {
+              prerelease = [identifier];
+            }
+            if (compareIdentifiers(this.prerelease[0], identifier) === 0) {
+              if (isNaN(this.prerelease[1])) {
+                this.prerelease = prerelease;
+              }
+            } else {
+              this.prerelease = prerelease;
+            }
+          }
+          break;
+        }
+        default:
+          throw new Error(`invalid increment argument: ${release}`);
+      }
+      this.raw = this.format();
+      if (this.build.length) {
+        this.raw += `+${this.build.join(".")}`;
+      }
+      return this;
+    }
+  }
+  module.exports = SemVer;
+});
+var require_parse2 = __commonJS2((exports, module) => {
+  var SemVer = require_semver();
+  var parse5 = (version2, options, throwErrors = false) => {
+    if (version2 instanceof SemVer) {
+      return version2;
+    }
+    try {
+      return new SemVer(version2, options);
+    } catch (er) {
+      if (!throwErrors) {
+        return null;
+      }
+      throw er;
+    }
+  };
+  module.exports = parse5;
+});
+var require_valid = __commonJS2((exports, module) => {
+  var parse5 = require_parse2();
+  var valid = (version2, options) => {
+    const v = parse5(version2, options);
+    return v ? v.version : null;
+  };
+  module.exports = valid;
+});
+var require_clean = __commonJS2((exports, module) => {
+  var parse5 = require_parse2();
+  var clean = (version2, options) => {
+    const s = parse5(version2.trim().replace(/^[=v]+/, ""), options);
+    return s ? s.version : null;
+  };
+  module.exports = clean;
+});
+var require_inc = __commonJS2((exports, module) => {
+  var SemVer = require_semver();
+  var inc = (version2, release, options, identifier, identifierBase) => {
+    if (typeof options === "string") {
+      identifierBase = identifier;
+      identifier = options;
+      options = undefined;
+    }
+    try {
+      return new SemVer(version2 instanceof SemVer ? version2.version : version2, options).inc(release, identifier, identifierBase).version;
+    } catch (er) {
+      return null;
+    }
+  };
+  module.exports = inc;
+});
+var require_diff = __commonJS2((exports, module) => {
+  var parse5 = require_parse2();
+  var diff = (version1, version2) => {
+    const v1 = parse5(version1, null, true);
+    const v2 = parse5(version2, null, true);
+    const comparison = v1.compare(v2);
+    if (comparison === 0) {
+      return null;
+    }
+    const v1Higher = comparison > 0;
+    const highVersion = v1Higher ? v1 : v2;
+    const lowVersion = v1Higher ? v2 : v1;
+    const highHasPre = !!highVersion.prerelease.length;
+    const lowHasPre = !!lowVersion.prerelease.length;
+    if (lowHasPre && !highHasPre) {
+      if (!lowVersion.patch && !lowVersion.minor) {
+        return "major";
+      }
+      if (lowVersion.compareMain(highVersion) === 0) {
+        if (lowVersion.minor && !lowVersion.patch) {
+          return "minor";
+        }
+        return "patch";
+      }
+    }
+    const prefix = highHasPre ? "pre" : "";
+    if (v1.major !== v2.major) {
+      return prefix + "major";
+    }
+    if (v1.minor !== v2.minor) {
+      return prefix + "minor";
+    }
+    if (v1.patch !== v2.patch) {
+      return prefix + "patch";
+    }
+    return "prerelease";
+  };
+  module.exports = diff;
+});
+var require_major = __commonJS2((exports, module) => {
+  var SemVer = require_semver();
+  var major = (a, loose) => new SemVer(a, loose).major;
+  module.exports = major;
+});
+var require_minor = __commonJS2((exports, module) => {
+  var SemVer = require_semver();
+  var minor = (a, loose) => new SemVer(a, loose).minor;
+  module.exports = minor;
+});
+var require_patch = __commonJS2((exports, module) => {
+  var SemVer = require_semver();
+  var patch = (a, loose) => new SemVer(a, loose).patch;
+  module.exports = patch;
+});
+var require_prerelease = __commonJS2((exports, module) => {
+  var parse5 = require_parse2();
+  var prerelease = (version2, options) => {
+    const parsed = parse5(version2, options);
+    return parsed && parsed.prerelease.length ? parsed.prerelease : null;
+  };
+  module.exports = prerelease;
+});
+var require_compare = __commonJS2((exports, module) => {
+  var SemVer = require_semver();
+  var compare = (a, b, loose) => new SemVer(a, loose).compare(new SemVer(b, loose));
+  module.exports = compare;
+});
+var require_rcompare = __commonJS2((exports, module) => {
+  var compare = require_compare();
+  var rcompare = (a, b, loose) => compare(b, a, loose);
+  module.exports = rcompare;
+});
+var require_compare_loose = __commonJS2((exports, module) => {
+  var compare = require_compare();
+  var compareLoose = (a, b) => compare(a, b, true);
+  module.exports = compareLoose;
+});
+var require_compare_build = __commonJS2((exports, module) => {
+  var SemVer = require_semver();
+  var compareBuild = (a, b, loose) => {
+    const versionA = new SemVer(a, loose);
+    const versionB = new SemVer(b, loose);
+    return versionA.compare(versionB) || versionA.compareBuild(versionB);
+  };
+  module.exports = compareBuild;
+});
+var require_sort = __commonJS2((exports, module) => {
+  var compareBuild = require_compare_build();
+  var sort = (list, loose) => list.sort((a, b) => compareBuild(a, b, loose));
+  module.exports = sort;
+});
+var require_rsort = __commonJS2((exports, module) => {
+  var compareBuild = require_compare_build();
+  var rsort = (list, loose) => list.sort((a, b) => compareBuild(b, a, loose));
+  module.exports = rsort;
+});
+var require_gt = __commonJS2((exports, module) => {
+  var compare = require_compare();
+  var gt = (a, b, loose) => compare(a, b, loose) > 0;
+  module.exports = gt;
+});
+var require_lt = __commonJS2((exports, module) => {
+  var compare = require_compare();
+  var lt = (a, b, loose) => compare(a, b, loose) < 0;
+  module.exports = lt;
+});
+var require_eq = __commonJS2((exports, module) => {
+  var compare = require_compare();
+  var eq = (a, b, loose) => compare(a, b, loose) === 0;
+  module.exports = eq;
+});
+var require_neq = __commonJS2((exports, module) => {
+  var compare = require_compare();
+  var neq = (a, b, loose) => compare(a, b, loose) !== 0;
+  module.exports = neq;
+});
+var require_gte = __commonJS2((exports, module) => {
+  var compare = require_compare();
+  var gte = (a, b, loose) => compare(a, b, loose) >= 0;
+  module.exports = gte;
+});
+var require_lte = __commonJS2((exports, module) => {
+  var compare = require_compare();
+  var lte = (a, b, loose) => compare(a, b, loose) <= 0;
+  module.exports = lte;
+});
+var require_cmp = __commonJS2((exports, module) => {
+  var eq = require_eq();
+  var neq = require_neq();
+  var gt = require_gt();
+  var gte = require_gte();
+  var lt = require_lt();
+  var lte = require_lte();
+  var cmp = (a, op, b, loose) => {
+    switch (op) {
+      case "===":
+        if (typeof a === "object") {
+          a = a.version;
+        }
+        if (typeof b === "object") {
+          b = b.version;
+        }
+        return a === b;
+      case "!==":
+        if (typeof a === "object") {
+          a = a.version;
+        }
+        if (typeof b === "object") {
+          b = b.version;
+        }
+        return a !== b;
+      case "":
+      case "=":
+      case "==":
+        return eq(a, b, loose);
+      case "!=":
+        return neq(a, b, loose);
+      case ">":
+        return gt(a, b, loose);
+      case ">=":
+        return gte(a, b, loose);
+      case "<":
+        return lt(a, b, loose);
+      case "<=":
+        return lte(a, b, loose);
+      default:
+        throw new TypeError(`Invalid operator: ${op}`);
+    }
+  };
+  module.exports = cmp;
+});
+var require_coerce = __commonJS2((exports, module) => {
+  var SemVer = require_semver();
+  var parse5 = require_parse2();
+  var { safeRe: re, t } = require_re();
+  var coerce = (version2, options) => {
+    if (version2 instanceof SemVer) {
+      return version2;
+    }
+    if (typeof version2 === "number") {
+      version2 = String(version2);
+    }
+    if (typeof version2 !== "string") {
+      return null;
+    }
+    options = options || {};
+    let match = null;
+    if (!options.rtl) {
+      match = version2.match(options.includePrerelease ? re[t.COERCEFULL] : re[t.COERCE]);
+    } else {
+      const coerceRtlRegex = options.includePrerelease ? re[t.COERCERTLFULL] : re[t.COERCERTL];
+      let next;
+      while ((next = coerceRtlRegex.exec(version2)) && (!match || match.index + match[0].length !== version2.length)) {
+        if (!match || next.index + next[0].length !== match.index + match[0].length) {
+          match = next;
+        }
+        coerceRtlRegex.lastIndex = next.index + next[1].length + next[2].length;
+      }
+      coerceRtlRegex.lastIndex = -1;
+    }
+    if (match === null) {
+      return null;
+    }
+    const major = match[2];
+    const minor = match[3] || "0";
+    const patch = match[4] || "0";
+    const prerelease = options.includePrerelease && match[5] ? `-${match[5]}` : "";
+    const build = options.includePrerelease && match[6] ? `+${match[6]}` : "";
+    return parse5(`${major}.${minor}.${patch}${prerelease}${build}`, options);
+  };
+  module.exports = coerce;
+});
+var require_lrucache = __commonJS2((exports, module) => {
+
+  class LRUCache {
+    constructor() {
+      this.max = 1000;
+      this.map = new Map;
+    }
+    get(key) {
+      const value = this.map.get(key);
+      if (value === undefined) {
+        return;
+      } else {
+        this.map.delete(key);
+        this.map.set(key, value);
+        return value;
+      }
+    }
+    delete(key) {
+      return this.map.delete(key);
+    }
+    set(key, value) {
+      const deleted = this.delete(key);
+      if (!deleted && value !== undefined) {
+        if (this.map.size >= this.max) {
+          const firstKey = this.map.keys().next().value;
+          this.delete(firstKey);
+        }
+        this.map.set(key, value);
+      }
+      return this;
+    }
+  }
+  module.exports = LRUCache;
+});
+var require_range = __commonJS2((exports, module) => {
+  var SPACE_CHARACTERS = /\s+/g;
+
+  class Range {
+    constructor(range, options) {
+      options = parseOptions(options);
+      if (range instanceof Range) {
+        if (range.loose === !!options.loose && range.includePrerelease === !!options.includePrerelease) {
+          return range;
+        } else {
+          return new Range(range.raw, options);
+        }
+      }
+      if (range instanceof Comparator) {
+        this.raw = range.value;
+        this.set = [[range]];
+        this.formatted = undefined;
+        return this;
+      }
+      this.options = options;
+      this.loose = !!options.loose;
+      this.includePrerelease = !!options.includePrerelease;
+      this.raw = range.trim().replace(SPACE_CHARACTERS, " ");
+      this.set = this.raw.split("||").map((r) => this.parseRange(r.trim())).filter((c) => c.length);
+      if (!this.set.length) {
+        throw new TypeError(`Invalid SemVer Range: ${this.raw}`);
+      }
+      if (this.set.length > 1) {
+        const first = this.set[0];
+        this.set = this.set.filter((c) => !isNullSet(c[0]));
+        if (this.set.length === 0) {
+          this.set = [first];
+        } else if (this.set.length > 1) {
+          for (const c of this.set) {
+            if (c.length === 1 && isAny(c[0])) {
+              this.set = [c];
+              break;
+            }
+          }
+        }
+      }
+      this.formatted = undefined;
+    }
+    get range() {
+      if (this.formatted === undefined) {
+        this.formatted = "";
+        for (let i = 0;i < this.set.length; i++) {
+          if (i > 0) {
+            this.formatted += "||";
+          }
+          const comps = this.set[i];
+          for (let k = 0;k < comps.length; k++) {
+            if (k > 0) {
+              this.formatted += " ";
+            }
+            this.formatted += comps[k].toString().trim();
+          }
+        }
+      }
+      return this.formatted;
+    }
+    format() {
+      return this.range;
+    }
+    toString() {
+      return this.range;
+    }
+    parseRange(range) {
+      const memoOpts = (this.options.includePrerelease && FLAG_INCLUDE_PRERELEASE) | (this.options.loose && FLAG_LOOSE);
+      const memoKey = memoOpts + ":" + range;
+      const cached2 = cache.get(memoKey);
+      if (cached2) {
+        return cached2;
+      }
+      const loose = this.options.loose;
+      const hr = loose ? re[t.HYPHENRANGELOOSE] : re[t.HYPHENRANGE];
+      range = range.replace(hr, hyphenReplace(this.options.includePrerelease));
+      debug("hyphen replace", range);
+      range = range.replace(re[t.COMPARATORTRIM], comparatorTrimReplace);
+      debug("comparator trim", range);
+      range = range.replace(re[t.TILDETRIM], tildeTrimReplace);
+      debug("tilde trim", range);
+      range = range.replace(re[t.CARETTRIM], caretTrimReplace);
+      debug("caret trim", range);
+      let rangeList = range.split(" ").map((comp) => parseComparator(comp, this.options)).join(" ").split(/\s+/).map((comp) => replaceGTE0(comp, this.options));
+      if (loose) {
+        rangeList = rangeList.filter((comp) => {
+          debug("loose invalid filter", comp, this.options);
+          return !!comp.match(re[t.COMPARATORLOOSE]);
+        });
+      }
+      debug("range list", rangeList);
+      const rangeMap = new Map;
+      const comparators = rangeList.map((comp) => new Comparator(comp, this.options));
+      for (const comp of comparators) {
+        if (isNullSet(comp)) {
+          return [comp];
+        }
+        rangeMap.set(comp.value, comp);
+      }
+      if (rangeMap.size > 1 && rangeMap.has("")) {
+        rangeMap.delete("");
+      }
+      const result = [...rangeMap.values()];
+      cache.set(memoKey, result);
+      return result;
+    }
+    intersects(range, options) {
+      if (!(range instanceof Range)) {
+        throw new TypeError("a Range is required");
+      }
+      return this.set.some((thisComparators) => {
+        return isSatisfiable(thisComparators, options) && range.set.some((rangeComparators) => {
+          return isSatisfiable(rangeComparators, options) && thisComparators.every((thisComparator) => {
+            return rangeComparators.every((rangeComparator) => {
+              return thisComparator.intersects(rangeComparator, options);
+            });
+          });
+        });
+      });
+    }
+    test(version2) {
+      if (!version2) {
+        return false;
+      }
+      if (typeof version2 === "string") {
+        try {
+          version2 = new SemVer(version2, this.options);
+        } catch (er) {
+          return false;
+        }
+      }
+      for (let i = 0;i < this.set.length; i++) {
+        if (testSet(this.set[i], version2, this.options)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+  module.exports = Range;
+  var LRU = require_lrucache();
+  var cache = new LRU;
+  var parseOptions = require_parse_options();
+  var Comparator = require_comparator();
+  var debug = require_debug();
+  var SemVer = require_semver();
+  var {
+    safeRe: re,
+    t,
+    comparatorTrimReplace,
+    tildeTrimReplace,
+    caretTrimReplace
+  } = require_re();
+  var { FLAG_INCLUDE_PRERELEASE, FLAG_LOOSE } = require_constants6();
+  var isNullSet = (c) => c.value === "<0.0.0-0";
+  var isAny = (c) => c.value === "";
+  var isSatisfiable = (comparators, options) => {
+    let result = true;
+    const remainingComparators = comparators.slice();
+    let testComparator = remainingComparators.pop();
+    while (result && remainingComparators.length) {
+      result = remainingComparators.every((otherComparator) => {
+        return testComparator.intersects(otherComparator, options);
+      });
+      testComparator = remainingComparators.pop();
+    }
+    return result;
+  };
+  var parseComparator = (comp, options) => {
+    comp = comp.replace(re[t.BUILD], "");
+    debug("comp", comp, options);
+    comp = replaceCarets(comp, options);
+    debug("caret", comp);
+    comp = replaceTildes(comp, options);
+    debug("tildes", comp);
+    comp = replaceXRanges(comp, options);
+    debug("xrange", comp);
+    comp = replaceStars(comp, options);
+    debug("stars", comp);
+    return comp;
+  };
+  var isX = (id) => !id || id.toLowerCase() === "x" || id === "*";
+  var replaceTildes = (comp, options) => {
+    return comp.trim().split(/\s+/).map((c) => replaceTilde(c, options)).join(" ");
+  };
+  var replaceTilde = (comp, options) => {
+    const r = options.loose ? re[t.TILDELOOSE] : re[t.TILDE];
+    return comp.replace(r, (_, M, m, p, pr) => {
+      debug("tilde", comp, _, M, m, p, pr);
+      let ret;
+      if (isX(M)) {
+        ret = "";
+      } else if (isX(m)) {
+        ret = `>=${M}.0.0 <${+M + 1}.0.0-0`;
+      } else if (isX(p)) {
+        ret = `>=${M}.${m}.0 <${M}.${+m + 1}.0-0`;
+      } else if (pr) {
+        debug("replaceTilde pr", pr);
+        ret = `>=${M}.${m}.${p}-${pr} <${M}.${+m + 1}.0-0`;
+      } else {
+        ret = `>=${M}.${m}.${p} <${M}.${+m + 1}.0-0`;
+      }
+      debug("tilde return", ret);
+      return ret;
+    });
+  };
+  var replaceCarets = (comp, options) => {
+    return comp.trim().split(/\s+/).map((c) => replaceCaret(c, options)).join(" ");
+  };
+  var replaceCaret = (comp, options) => {
+    debug("caret", comp, options);
+    const r = options.loose ? re[t.CARETLOOSE] : re[t.CARET];
+    const z = options.includePrerelease ? "-0" : "";
+    return comp.replace(r, (_, M, m, p, pr) => {
+      debug("caret", comp, _, M, m, p, pr);
+      let ret;
+      if (isX(M)) {
+        ret = "";
+      } else if (isX(m)) {
+        ret = `>=${M}.0.0${z} <${+M + 1}.0.0-0`;
+      } else if (isX(p)) {
+        if (M === "0") {
+          ret = `>=${M}.${m}.0${z} <${M}.${+m + 1}.0-0`;
+        } else {
+          ret = `>=${M}.${m}.0${z} <${+M + 1}.0.0-0`;
+        }
+      } else if (pr) {
+        debug("replaceCaret pr", pr);
+        if (M === "0") {
+          if (m === "0") {
+            ret = `>=${M}.${m}.${p}-${pr} <${M}.${m}.${+p + 1}-0`;
+          } else {
+            ret = `>=${M}.${m}.${p}-${pr} <${M}.${+m + 1}.0-0`;
+          }
+        } else {
+          ret = `>=${M}.${m}.${p}-${pr} <${+M + 1}.0.0-0`;
+        }
+      } else {
+        debug("no pr");
+        if (M === "0") {
+          if (m === "0") {
+            ret = `>=${M}.${m}.${p}${z} <${M}.${m}.${+p + 1}-0`;
+          } else {
+            ret = `>=${M}.${m}.${p}${z} <${M}.${+m + 1}.0-0`;
+          }
+        } else {
+          ret = `>=${M}.${m}.${p} <${+M + 1}.0.0-0`;
+        }
+      }
+      debug("caret return", ret);
+      return ret;
+    });
+  };
+  var replaceXRanges = (comp, options) => {
+    debug("replaceXRanges", comp, options);
+    return comp.split(/\s+/).map((c) => replaceXRange(c, options)).join(" ");
+  };
+  var replaceXRange = (comp, options) => {
+    comp = comp.trim();
+    const r = options.loose ? re[t.XRANGELOOSE] : re[t.XRANGE];
+    return comp.replace(r, (ret, gtlt, M, m, p, pr) => {
+      debug("xRange", comp, ret, gtlt, M, m, p, pr);
+      const xM = isX(M);
+      const xm = xM || isX(m);
+      const xp = xm || isX(p);
+      const anyX = xp;
+      if (gtlt === "=" && anyX) {
+        gtlt = "";
+      }
+      pr = options.includePrerelease ? "-0" : "";
+      if (xM) {
+        if (gtlt === ">" || gtlt === "<") {
+          ret = "<0.0.0-0";
+        } else {
+          ret = "*";
+        }
+      } else if (gtlt && anyX) {
+        if (xm) {
+          m = 0;
+        }
+        p = 0;
+        if (gtlt === ">") {
+          gtlt = ">=";
+          if (xm) {
+            M = +M + 1;
+            m = 0;
+            p = 0;
+          } else {
+            m = +m + 1;
+            p = 0;
+          }
+        } else if (gtlt === "<=") {
+          gtlt = "<";
+          if (xm) {
+            M = +M + 1;
+          } else {
+            m = +m + 1;
+          }
+        }
+        if (gtlt === "<") {
+          pr = "-0";
+        }
+        ret = `${gtlt + M}.${m}.${p}${pr}`;
+      } else if (xm) {
+        ret = `>=${M}.0.0${pr} <${+M + 1}.0.0-0`;
+      } else if (xp) {
+        ret = `>=${M}.${m}.0${pr} <${M}.${+m + 1}.0-0`;
+      }
+      debug("xRange return", ret);
+      return ret;
+    });
+  };
+  var replaceStars = (comp, options) => {
+    debug("replaceStars", comp, options);
+    return comp.trim().replace(re[t.STAR], "");
+  };
+  var replaceGTE0 = (comp, options) => {
+    debug("replaceGTE0", comp, options);
+    return comp.trim().replace(re[options.includePrerelease ? t.GTE0PRE : t.GTE0], "");
+  };
+  var hyphenReplace = (incPr) => ($0, from, fM, fm, fp, fpr, fb, to, tM, tm, tp, tpr) => {
+    if (isX(fM)) {
+      from = "";
+    } else if (isX(fm)) {
+      from = `>=${fM}.0.0${incPr ? "-0" : ""}`;
+    } else if (isX(fp)) {
+      from = `>=${fM}.${fm}.0${incPr ? "-0" : ""}`;
+    } else if (fpr) {
+      from = `>=${from}`;
+    } else {
+      from = `>=${from}${incPr ? "-0" : ""}`;
+    }
+    if (isX(tM)) {
+      to = "";
+    } else if (isX(tm)) {
+      to = `<${+tM + 1}.0.0-0`;
+    } else if (isX(tp)) {
+      to = `<${tM}.${+tm + 1}.0-0`;
+    } else if (tpr) {
+      to = `<=${tM}.${tm}.${tp}-${tpr}`;
+    } else if (incPr) {
+      to = `<${tM}.${tm}.${+tp + 1}-0`;
+    } else {
+      to = `<=${to}`;
+    }
+    return `${from} ${to}`.trim();
+  };
+  var testSet = (set2, version2, options) => {
+    for (let i = 0;i < set2.length; i++) {
+      if (!set2[i].test(version2)) {
+        return false;
+      }
+    }
+    if (version2.prerelease.length && !options.includePrerelease) {
+      for (let i = 0;i < set2.length; i++) {
+        debug(set2[i].semver);
+        if (set2[i].semver === Comparator.ANY) {
+          continue;
+        }
+        if (set2[i].semver.prerelease.length > 0) {
+          const allowed = set2[i].semver;
+          if (allowed.major === version2.major && allowed.minor === version2.minor && allowed.patch === version2.patch) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+    return true;
+  };
+});
+var require_comparator = __commonJS2((exports, module) => {
+  var ANY = Symbol("SemVer ANY");
+
+  class Comparator {
+    static get ANY() {
+      return ANY;
+    }
+    constructor(comp, options) {
+      options = parseOptions(options);
+      if (comp instanceof Comparator) {
+        if (comp.loose === !!options.loose) {
+          return comp;
+        } else {
+          comp = comp.value;
+        }
+      }
+      comp = comp.trim().split(/\s+/).join(" ");
+      debug("comparator", comp, options);
+      this.options = options;
+      this.loose = !!options.loose;
+      this.parse(comp);
+      if (this.semver === ANY) {
+        this.value = "";
+      } else {
+        this.value = this.operator + this.semver.version;
+      }
+      debug("comp", this);
+    }
+    parse(comp) {
+      const r = this.options.loose ? re[t.COMPARATORLOOSE] : re[t.COMPARATOR];
+      const m = comp.match(r);
+      if (!m) {
+        throw new TypeError(`Invalid comparator: ${comp}`);
+      }
+      this.operator = m[1] !== undefined ? m[1] : "";
+      if (this.operator === "=") {
+        this.operator = "";
+      }
+      if (!m[2]) {
+        this.semver = ANY;
+      } else {
+        this.semver = new SemVer(m[2], this.options.loose);
+      }
+    }
+    toString() {
+      return this.value;
+    }
+    test(version2) {
+      debug("Comparator.test", version2, this.options.loose);
+      if (this.semver === ANY || version2 === ANY) {
+        return true;
+      }
+      if (typeof version2 === "string") {
+        try {
+          version2 = new SemVer(version2, this.options);
+        } catch (er) {
+          return false;
+        }
+      }
+      return cmp(version2, this.operator, this.semver, this.options);
+    }
+    intersects(comp, options) {
+      if (!(comp instanceof Comparator)) {
+        throw new TypeError("a Comparator is required");
+      }
+      if (this.operator === "") {
+        if (this.value === "") {
+          return true;
+        }
+        return new Range(comp.value, options).test(this.value);
+      } else if (comp.operator === "") {
+        if (comp.value === "") {
+          return true;
+        }
+        return new Range(this.value, options).test(comp.semver);
+      }
+      options = parseOptions(options);
+      if (options.includePrerelease && (this.value === "<0.0.0-0" || comp.value === "<0.0.0-0")) {
+        return false;
+      }
+      if (!options.includePrerelease && (this.value.startsWith("<0.0.0") || comp.value.startsWith("<0.0.0"))) {
+        return false;
+      }
+      if (this.operator.startsWith(">") && comp.operator.startsWith(">")) {
+        return true;
+      }
+      if (this.operator.startsWith("<") && comp.operator.startsWith("<")) {
+        return true;
+      }
+      if (this.semver.version === comp.semver.version && this.operator.includes("=") && comp.operator.includes("=")) {
+        return true;
+      }
+      if (cmp(this.semver, "<", comp.semver, options) && this.operator.startsWith(">") && comp.operator.startsWith("<")) {
+        return true;
+      }
+      if (cmp(this.semver, ">", comp.semver, options) && this.operator.startsWith("<") && comp.operator.startsWith(">")) {
+        return true;
+      }
+      return false;
+    }
+  }
+  module.exports = Comparator;
+  var parseOptions = require_parse_options();
+  var { safeRe: re, t } = require_re();
+  var cmp = require_cmp();
+  var debug = require_debug();
+  var SemVer = require_semver();
+  var Range = require_range();
+});
+var require_satisfies = __commonJS2((exports, module) => {
+  var Range = require_range();
+  var satisfies = (version2, range, options) => {
+    try {
+      range = new Range(range, options);
+    } catch (er) {
+      return false;
+    }
+    return range.test(version2);
+  };
+  module.exports = satisfies;
+});
+var require_to_comparators = __commonJS2((exports, module) => {
+  var Range = require_range();
+  var toComparators = (range, options) => new Range(range, options).set.map((comp) => comp.map((c) => c.value).join(" ").trim().split(" "));
+  module.exports = toComparators;
+});
+var require_max_satisfying = __commonJS2((exports, module) => {
+  var SemVer = require_semver();
+  var Range = require_range();
+  var maxSatisfying = (versions2, range, options) => {
+    let max = null;
+    let maxSV = null;
+    let rangeObj = null;
+    try {
+      rangeObj = new Range(range, options);
+    } catch (er) {
+      return null;
+    }
+    versions2.forEach((v) => {
+      if (rangeObj.test(v)) {
+        if (!max || maxSV.compare(v) === -1) {
+          max = v;
+          maxSV = new SemVer(max, options);
+        }
+      }
+    });
+    return max;
+  };
+  module.exports = maxSatisfying;
+});
+var require_min_satisfying = __commonJS2((exports, module) => {
+  var SemVer = require_semver();
+  var Range = require_range();
+  var minSatisfying = (versions2, range, options) => {
+    let min = null;
+    let minSV = null;
+    let rangeObj = null;
+    try {
+      rangeObj = new Range(range, options);
+    } catch (er) {
+      return null;
+    }
+    versions2.forEach((v) => {
+      if (rangeObj.test(v)) {
+        if (!min || minSV.compare(v) === 1) {
+          min = v;
+          minSV = new SemVer(min, options);
+        }
+      }
+    });
+    return min;
+  };
+  module.exports = minSatisfying;
+});
+var require_min_version = __commonJS2((exports, module) => {
+  var SemVer = require_semver();
+  var Range = require_range();
+  var gt = require_gt();
+  var minVersion = (range, loose) => {
+    range = new Range(range, loose);
+    let minver = new SemVer("0.0.0");
+    if (range.test(minver)) {
+      return minver;
+    }
+    minver = new SemVer("0.0.0-0");
+    if (range.test(minver)) {
+      return minver;
+    }
+    minver = null;
+    for (let i = 0;i < range.set.length; ++i) {
+      const comparators = range.set[i];
+      let setMin = null;
+      comparators.forEach((comparator) => {
+        const compver = new SemVer(comparator.semver.version);
+        switch (comparator.operator) {
+          case ">":
+            if (compver.prerelease.length === 0) {
+              compver.patch++;
+            } else {
+              compver.prerelease.push(0);
+            }
+            compver.raw = compver.format();
+          case "":
+          case ">=":
+            if (!setMin || gt(compver, setMin)) {
+              setMin = compver;
+            }
+            break;
+          case "<":
+          case "<=":
+            break;
+          default:
+            throw new Error(`Unexpected operation: ${comparator.operator}`);
+        }
+      });
+      if (setMin && (!minver || gt(minver, setMin))) {
+        minver = setMin;
+      }
+    }
+    if (minver && range.test(minver)) {
+      return minver;
+    }
+    return null;
+  };
+  module.exports = minVersion;
+});
+var require_valid2 = __commonJS2((exports, module) => {
+  var Range = require_range();
+  var validRange = (range, options) => {
+    try {
+      return new Range(range, options).range || "*";
+    } catch (er) {
+      return null;
+    }
+  };
+  module.exports = validRange;
+});
+var require_outside = __commonJS2((exports, module) => {
+  var SemVer = require_semver();
+  var Comparator = require_comparator();
+  var { ANY } = Comparator;
+  var Range = require_range();
+  var satisfies = require_satisfies();
+  var gt = require_gt();
+  var lt = require_lt();
+  var lte = require_lte();
+  var gte = require_gte();
+  var outside = (version2, range, hilo, options) => {
+    version2 = new SemVer(version2, options);
+    range = new Range(range, options);
+    let gtfn, ltefn, ltfn, comp, ecomp;
+    switch (hilo) {
+      case ">":
+        gtfn = gt;
+        ltefn = lte;
+        ltfn = lt;
+        comp = ">";
+        ecomp = ">=";
+        break;
+      case "<":
+        gtfn = lt;
+        ltefn = gte;
+        ltfn = gt;
+        comp = "<";
+        ecomp = "<=";
+        break;
+      default:
+        throw new TypeError('Must provide a hilo val of "<" or ">"');
+    }
+    if (satisfies(version2, range, options)) {
+      return false;
+    }
+    for (let i = 0;i < range.set.length; ++i) {
+      const comparators = range.set[i];
+      let high = null;
+      let low = null;
+      comparators.forEach((comparator) => {
+        if (comparator.semver === ANY) {
+          comparator = new Comparator(">=0.0.0");
+        }
+        high = high || comparator;
+        low = low || comparator;
+        if (gtfn(comparator.semver, high.semver, options)) {
+          high = comparator;
+        } else if (ltfn(comparator.semver, low.semver, options)) {
+          low = comparator;
+        }
+      });
+      if (high.operator === comp || high.operator === ecomp) {
+        return false;
+      }
+      if ((!low.operator || low.operator === comp) && ltefn(version2, low.semver)) {
+        return false;
+      } else if (low.operator === ecomp && ltfn(version2, low.semver)) {
+        return false;
+      }
+    }
+    return true;
+  };
+  module.exports = outside;
+});
+var require_gtr = __commonJS2((exports, module) => {
+  var outside = require_outside();
+  var gtr = (version2, range, options) => outside(version2, range, ">", options);
+  module.exports = gtr;
+});
+var require_ltr = __commonJS2((exports, module) => {
+  var outside = require_outside();
+  var ltr = (version2, range, options) => outside(version2, range, "<", options);
+  module.exports = ltr;
+});
+var require_intersects = __commonJS2((exports, module) => {
+  var Range = require_range();
+  var intersects = (r1, r2, options) => {
+    r1 = new Range(r1, options);
+    r2 = new Range(r2, options);
+    return r1.intersects(r2, options);
+  };
+  module.exports = intersects;
+});
+var require_simplify = __commonJS2((exports, module) => {
+  var satisfies = require_satisfies();
+  var compare = require_compare();
+  module.exports = (versions2, range, options) => {
+    const set2 = [];
+    let first = null;
+    let prev = null;
+    const v = versions2.sort((a, b) => compare(a, b, options));
+    for (const version2 of v) {
+      const included = satisfies(version2, range, options);
+      if (included) {
+        prev = version2;
+        if (!first) {
+          first = version2;
+        }
+      } else {
+        if (prev) {
+          set2.push([first, prev]);
+        }
+        prev = null;
+        first = null;
+      }
+    }
+    if (first) {
+      set2.push([first, null]);
+    }
+    const ranges = [];
+    for (const [min, max] of set2) {
+      if (min === max) {
+        ranges.push(min);
+      } else if (!max && min === v[0]) {
+        ranges.push("*");
+      } else if (!max) {
+        ranges.push(`>=${min}`);
+      } else if (min === v[0]) {
+        ranges.push(`<=${max}`);
+      } else {
+        ranges.push(`${min} - ${max}`);
+      }
+    }
+    const simplified = ranges.join(" || ");
+    const original = typeof range.raw === "string" ? range.raw : String(range);
+    return simplified.length < original.length ? simplified : range;
+  };
+});
+var require_subset = __commonJS2((exports, module) => {
+  var Range = require_range();
+  var Comparator = require_comparator();
+  var { ANY } = Comparator;
+  var satisfies = require_satisfies();
+  var compare = require_compare();
+  var subset = (sub, dom, options = {}) => {
+    if (sub === dom) {
+      return true;
+    }
+    sub = new Range(sub, options);
+    dom = new Range(dom, options);
+    let sawNonNull = false;
+    OUTER:
+      for (const simpleSub of sub.set) {
+        for (const simpleDom of dom.set) {
+          const isSub = simpleSubset(simpleSub, simpleDom, options);
+          sawNonNull = sawNonNull || isSub !== null;
+          if (isSub) {
+            continue OUTER;
+          }
+        }
+        if (sawNonNull) {
+          return false;
+        }
+      }
+    return true;
+  };
+  var minimumVersionWithPreRelease = [new Comparator(">=0.0.0-0")];
+  var minimumVersion = [new Comparator(">=0.0.0")];
+  var simpleSubset = (sub, dom, options) => {
+    if (sub === dom) {
+      return true;
+    }
+    if (sub.length === 1 && sub[0].semver === ANY) {
+      if (dom.length === 1 && dom[0].semver === ANY) {
+        return true;
+      } else if (options.includePrerelease) {
+        sub = minimumVersionWithPreRelease;
+      } else {
+        sub = minimumVersion;
+      }
+    }
+    if (dom.length === 1 && dom[0].semver === ANY) {
+      if (options.includePrerelease) {
+        return true;
+      } else {
+        dom = minimumVersion;
+      }
+    }
+    const eqSet = new Set;
+    let gt, lt;
+    for (const c of sub) {
+      if (c.operator === ">" || c.operator === ">=") {
+        gt = higherGT(gt, c, options);
+      } else if (c.operator === "<" || c.operator === "<=") {
+        lt = lowerLT(lt, c, options);
+      } else {
+        eqSet.add(c.semver);
+      }
+    }
+    if (eqSet.size > 1) {
+      return null;
+    }
+    let gtltComp;
+    if (gt && lt) {
+      gtltComp = compare(gt.semver, lt.semver, options);
+      if (gtltComp > 0) {
+        return null;
+      } else if (gtltComp === 0 && (gt.operator !== ">=" || lt.operator !== "<=")) {
+        return null;
+      }
+    }
+    for (const eq of eqSet) {
+      if (gt && !satisfies(eq, String(gt), options)) {
+        return null;
+      }
+      if (lt && !satisfies(eq, String(lt), options)) {
+        return null;
+      }
+      for (const c of dom) {
+        if (!satisfies(eq, String(c), options)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    let higher, lower;
+    let hasDomLT, hasDomGT;
+    let needDomLTPre = lt && !options.includePrerelease && lt.semver.prerelease.length ? lt.semver : false;
+    let needDomGTPre = gt && !options.includePrerelease && gt.semver.prerelease.length ? gt.semver : false;
+    if (needDomLTPre && needDomLTPre.prerelease.length === 1 && lt.operator === "<" && needDomLTPre.prerelease[0] === 0) {
+      needDomLTPre = false;
+    }
+    for (const c of dom) {
+      hasDomGT = hasDomGT || c.operator === ">" || c.operator === ">=";
+      hasDomLT = hasDomLT || c.operator === "<" || c.operator === "<=";
+      if (gt) {
+        if (needDomGTPre) {
+          if (c.semver.prerelease && c.semver.prerelease.length && c.semver.major === needDomGTPre.major && c.semver.minor === needDomGTPre.minor && c.semver.patch === needDomGTPre.patch) {
+            needDomGTPre = false;
+          }
+        }
+        if (c.operator === ">" || c.operator === ">=") {
+          higher = higherGT(gt, c, options);
+          if (higher === c && higher !== gt) {
+            return false;
+          }
+        } else if (gt.operator === ">=" && !satisfies(gt.semver, String(c), options)) {
+          return false;
+        }
+      }
+      if (lt) {
+        if (needDomLTPre) {
+          if (c.semver.prerelease && c.semver.prerelease.length && c.semver.major === needDomLTPre.major && c.semver.minor === needDomLTPre.minor && c.semver.patch === needDomLTPre.patch) {
+            needDomLTPre = false;
+          }
+        }
+        if (c.operator === "<" || c.operator === "<=") {
+          lower = lowerLT(lt, c, options);
+          if (lower === c && lower !== lt) {
+            return false;
+          }
+        } else if (lt.operator === "<=" && !satisfies(lt.semver, String(c), options)) {
+          return false;
+        }
+      }
+      if (!c.operator && (lt || gt) && gtltComp !== 0) {
+        return false;
+      }
+    }
+    if (gt && hasDomLT && !lt && gtltComp !== 0) {
+      return false;
+    }
+    if (lt && hasDomGT && !gt && gtltComp !== 0) {
+      return false;
+    }
+    if (needDomGTPre || needDomLTPre) {
+      return false;
+    }
+    return true;
+  };
+  var higherGT = (a, b, options) => {
+    if (!a) {
+      return b;
+    }
+    const comp = compare(a.semver, b.semver, options);
+    return comp > 0 ? a : comp < 0 ? b : b.operator === ">" && a.operator === ">=" ? b : a;
+  };
+  var lowerLT = (a, b, options) => {
+    if (!a) {
+      return b;
+    }
+    const comp = compare(a.semver, b.semver, options);
+    return comp < 0 ? a : comp > 0 ? b : b.operator === "<" && a.operator === "<=" ? b : a;
+  };
+  module.exports = subset;
+});
+var require_semver2 = __commonJS2((exports, module) => {
+  var internalRe = require_re();
+  var constants = require_constants6();
+  var SemVer = require_semver();
+  var identifiers = require_identifiers();
+  var parse5 = require_parse2();
+  var valid = require_valid();
+  var clean = require_clean();
+  var inc = require_inc();
+  var diff = require_diff();
+  var major = require_major();
+  var minor = require_minor();
+  var patch = require_patch();
+  var prerelease = require_prerelease();
+  var compare = require_compare();
+  var rcompare = require_rcompare();
+  var compareLoose = require_compare_loose();
+  var compareBuild = require_compare_build();
+  var sort = require_sort();
+  var rsort = require_rsort();
+  var gt = require_gt();
+  var lt = require_lt();
+  var eq = require_eq();
+  var neq = require_neq();
+  var gte = require_gte();
+  var lte = require_lte();
+  var cmp = require_cmp();
+  var coerce = require_coerce();
+  var Comparator = require_comparator();
+  var Range = require_range();
+  var satisfies = require_satisfies();
+  var toComparators = require_to_comparators();
+  var maxSatisfying = require_max_satisfying();
+  var minSatisfying = require_min_satisfying();
+  var minVersion = require_min_version();
+  var validRange = require_valid2();
+  var outside = require_outside();
+  var gtr = require_gtr();
+  var ltr = require_ltr();
+  var intersects = require_intersects();
+  var simplifyRange = require_simplify();
+  var subset = require_subset();
+  module.exports = {
+    parse: parse5,
+    valid,
+    clean,
+    inc,
+    diff,
+    major,
+    minor,
+    patch,
+    prerelease,
+    compare,
+    rcompare,
+    compareLoose,
+    compareBuild,
+    sort,
+    rsort,
+    gt,
+    lt,
+    eq,
+    neq,
+    gte,
+    lte,
+    cmp,
+    coerce,
+    Comparator,
+    Range,
+    satisfies,
+    toComparators,
+    maxSatisfying,
+    minSatisfying,
+    minVersion,
+    validRange,
+    outside,
+    gtr,
+    ltr,
+    intersects,
+    simplifyRange,
+    subset,
+    SemVer,
+    re: internalRe.re,
+    src: internalRe.src,
+    tokens: internalRe.t,
+    SEMVER_SPEC_VERSION: constants.SEMVER_SPEC_VERSION,
+    RELEASE_TYPES: constants.RELEASE_TYPES,
+    compareIdentifiers: identifiers.compareIdentifiers,
+    rcompareIdentifiers: identifiers.rcompareIdentifiers
+  };
+});
 var exports_external = {};
-__export(exports_external, {
+__export2(exports_external, {
   xid: () => xid2,
   void: () => _void2,
   uuidv7: () => uuidv7,
@@ -21631,10 +21568,8 @@ __export(exports_external, {
   $input: () => $input,
   $brand: () => $brand
 });
-
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/index.js
 var exports_core2 = {};
-__export(exports_core2, {
+__export2(exports_core2, {
   version: () => version,
   util: () => exports_util,
   treeifyError: () => treeifyError,
@@ -21900,8 +21835,6 @@ __export(exports_core2, {
   $ZodArray: () => $ZodArray,
   $ZodAny: () => $ZodAny
 });
-
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/core.js
 var NEVER = Object.freeze({
   status: "aborted"
 });
@@ -21977,9 +21910,8 @@ function config(newConfig) {
     Object.assign(globalConfig, newConfig);
   return globalConfig;
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/util.js
 var exports_util = {};
-__export(exports_util, {
+__export2(exports_util, {
   unwrapMessage: () => unwrapMessage,
   uint8ArrayToHex: () => uint8ArrayToHex,
   uint8ArrayToBase64url: () => uint8ArrayToBase64url,
@@ -22611,8 +22543,6 @@ function uint8ArrayToHex(bytes) {
 class Class {
   constructor(..._args) {}
 }
-
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/errors.js
 var initializer = (inst, def) => {
   inst.name = "$ZodError";
   Object.defineProperty(inst, "_zod", {
@@ -22748,8 +22678,6 @@ function prettifyError(error) {
   return lines.join(`
 `);
 }
-
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/parse.js
 var _parse = (_Err) => (schema, value, _ctx, _params) => {
   const ctx = _ctx ? Object.assign(_ctx, { async: false }) : { async: false };
   const result = schema._zod.run({ value, issues: [] }, ctx);
@@ -22836,9 +22764,8 @@ var _safeDecodeAsync = (_Err) => async (schema, value, _ctx) => {
   return _safeParseAsync(_Err)(schema, value, _ctx);
 };
 var safeDecodeAsync = /* @__PURE__ */ _safeDecodeAsync($ZodRealError);
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/regexes.js
 var exports_regexes = {};
-__export(exports_regexes, {
+__export2(exports_regexes, {
   xid: () => xid,
   uuid7: () => uuid7,
   uuid6: () => uuid6,
@@ -22992,8 +22919,6 @@ var sha384_base64url = /* @__PURE__ */ fixedBase64url(64);
 var sha512_hex = /^[0-9a-fA-F]{128}$/;
 var sha512_base64 = /* @__PURE__ */ fixedBase64(86, "==");
 var sha512_base64url = /* @__PURE__ */ fixedBase64url(86);
-
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/checks.js
 var $ZodCheck = /* @__PURE__ */ $constructor("$ZodCheck", (inst, def) => {
   var _a;
   inst._zod ?? (inst._zod = {});
@@ -23534,7 +23459,6 @@ var $ZodCheckOverwrite = /* @__PURE__ */ $constructor("$ZodCheckOverwrite", (ins
   };
 });
 
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/doc.js
 class Doc {
   constructor(args = []) {
     this.content = [];
@@ -23571,15 +23495,11 @@ class Doc {
 `));
   }
 }
-
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/versions.js
 var version = {
   major: 4,
   minor: 1,
   patch: 13
 };
-
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/schemas.js
 var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
   var _a;
   inst ?? (inst = {});
@@ -25414,9 +25334,8 @@ function handleRefineResult(result, payload, input, inst) {
     payload.issues.push(issue(_iss));
   }
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/index.js
 var exports_locales = {};
-__export(exports_locales, {
+__export2(exports_locales, {
   zhTW: () => zh_TW_default,
   zhCN: () => zh_CN_default,
   yo: () => yo_default,
@@ -25465,8 +25384,6 @@ __export(exports_locales, {
   az: () => az_default,
   ar: () => ar_default
 });
-
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/ar.js
 var error = () => {
   const Sizable = {
     string: { unit: "حرف", verb: "أن يحوي" },
@@ -25582,7 +25499,6 @@ function ar_default() {
     localeError: error()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/az.js
 var error2 = () => {
   const Sizable = {
     string: { unit: "simvol", verb: "olmalıdır" },
@@ -25697,7 +25613,6 @@ function az_default() {
     localeError: error2()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/be.js
 function getBelarusianPlural(count, one, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
@@ -25861,7 +25776,6 @@ function be_default() {
     localeError: error3()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/bg.js
 var parsedType = (data) => {
   const t = typeof data;
   switch (t) {
@@ -25989,7 +25903,6 @@ function bg_default() {
     localeError: error4()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/ca.js
 var error5 = () => {
   const Sizable = {
     string: { unit: "caràcters", verb: "contenir" },
@@ -26106,7 +26019,6 @@ function ca_default() {
     localeError: error5()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/cs.js
 var error6 = () => {
   const Sizable = {
     string: { unit: "znaků", verb: "mít" },
@@ -26241,7 +26153,6 @@ function cs_default() {
     localeError: error6()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/da.js
 var error7 = () => {
   const Sizable = {
     string: { unit: "tegn", verb: "havde" },
@@ -26372,7 +26283,6 @@ function da_default() {
     localeError: error7()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/de.js
 var error8 = () => {
   const Sizable = {
     string: { unit: "Zeichen", verb: "zu haben" },
@@ -26488,7 +26398,6 @@ function de_default() {
     localeError: error8()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/en.js
 var parsedType2 = (data) => {
   const t = typeof data;
   switch (t) {
@@ -26606,7 +26515,6 @@ function en_default() {
     localeError: error9()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/eo.js
 var parsedType3 = (data) => {
   const t = typeof data;
   switch (t) {
@@ -26722,7 +26630,6 @@ function eo_default() {
     localeError: error10()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/es.js
 var error11 = () => {
   const Sizable = {
     string: { unit: "caracteres", verb: "tener" },
@@ -26870,7 +26777,6 @@ function es_default() {
     localeError: error11()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/fa.js
 var error12 = () => {
   const Sizable = {
     string: { unit: "کاراکتر", verb: "داشته باشد" },
@@ -26992,7 +26898,6 @@ function fa_default() {
     localeError: error12()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/fi.js
 var error13 = () => {
   const Sizable = {
     string: { unit: "merkkiä", subject: "merkkijonon" },
@@ -27114,7 +27019,6 @@ function fi_default() {
     localeError: error13()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/fr.js
 var error14 = () => {
   const Sizable = {
     string: { unit: "caractères", verb: "avoir" },
@@ -27230,7 +27134,6 @@ function fr_default() {
     localeError: error14()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/fr-CA.js
 var error15 = () => {
   const Sizable = {
     string: { unit: "caractères", verb: "avoir" },
@@ -27347,7 +27250,6 @@ function fr_CA_default() {
     localeError: error15()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/he.js
 var error16 = () => {
   const TypeNames = {
     string: { label: "מחרוזת", gender: "f" },
@@ -27553,7 +27455,6 @@ function he_default() {
     localeError: error16()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/hu.js
 var error17 = () => {
   const Sizable = {
     string: { unit: "karakter", verb: "legyen" },
@@ -27669,7 +27570,6 @@ function hu_default() {
     localeError: error17()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/id.js
 var error18 = () => {
   const Sizable = {
     string: { unit: "karakter", verb: "memiliki" },
@@ -27785,7 +27685,6 @@ function id_default() {
     localeError: error18()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/is.js
 var parsedType4 = (data) => {
   const t = typeof data;
   switch (t) {
@@ -27902,7 +27801,6 @@ function is_default() {
     localeError: error19()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/it.js
 var error20 = () => {
   const Sizable = {
     string: { unit: "caratteri", verb: "avere" },
@@ -28018,7 +27916,6 @@ function it_default() {
     localeError: error20()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/ja.js
 var error21 = () => {
   const Sizable = {
     string: { unit: "文字", verb: "である" },
@@ -28133,7 +28030,6 @@ function ja_default() {
     localeError: error21()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/ka.js
 var parsedType5 = (data) => {
   const t = typeof data;
   switch (t) {
@@ -28258,7 +28154,6 @@ function ka_default() {
     localeError: error22()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/km.js
 var error23 = () => {
   const Sizable = {
     string: { unit: "តួអក្សរ", verb: "គួរមាន" },
@@ -28375,12 +28270,9 @@ function km_default() {
     localeError: error23()
   };
 }
-
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/kh.js
 function kh_default() {
   return km_default();
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/ko.js
 var error24 = () => {
   const Sizable = {
     string: { unit: "문자", verb: "to have" },
@@ -28501,7 +28393,6 @@ function ko_default() {
     localeError: error24()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/lt.js
 var parsedType6 = (data) => {
   const t = typeof data;
   return parsedTypeFromType(t, data);
@@ -28730,7 +28621,6 @@ function lt_default() {
     localeError: error25()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/mk.js
 var error26 = () => {
   const Sizable = {
     string: { unit: "знаци", verb: "да имаат" },
@@ -28847,7 +28737,6 @@ function mk_default() {
     localeError: error26()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/ms.js
 var error27 = () => {
   const Sizable = {
     string: { unit: "aksara", verb: "mempunyai" },
@@ -28963,7 +28852,6 @@ function ms_default() {
     localeError: error27()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/nl.js
 var error28 = () => {
   const Sizable = {
     string: { unit: "tekens", verb: "te hebben" },
@@ -29080,7 +28968,6 @@ function nl_default() {
     localeError: error28()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/no.js
 var error29 = () => {
   const Sizable = {
     string: { unit: "tegn", verb: "å ha" },
@@ -29196,7 +29083,6 @@ function no_default() {
     localeError: error29()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/ota.js
 var error30 = () => {
   const Sizable = {
     string: { unit: "harf", verb: "olmalıdır" },
@@ -29312,7 +29198,6 @@ function ota_default() {
     localeError: error30()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/ps.js
 var error31 = () => {
   const Sizable = {
     string: { unit: "توکي", verb: "ولري" },
@@ -29434,7 +29319,6 @@ function ps_default() {
     localeError: error31()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/pl.js
 var error32 = () => {
   const Sizable = {
     string: { unit: "znaków", verb: "mieć" },
@@ -29551,7 +29435,6 @@ function pl_default() {
     localeError: error32()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/pt.js
 var error33 = () => {
   const Sizable = {
     string: { unit: "caracteres", verb: "ter" },
@@ -29667,7 +29550,6 @@ function pt_default() {
     localeError: error33()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/ru.js
 function getRussianPlural(count, one, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
@@ -29831,7 +29713,6 @@ function ru_default() {
     localeError: error34()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/sl.js
 var error35 = () => {
   const Sizable = {
     string: { unit: "znakov", verb: "imeti" },
@@ -29948,7 +29829,6 @@ function sl_default() {
     localeError: error35()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/sv.js
 var error36 = () => {
   const Sizable = {
     string: { unit: "tecken", verb: "att ha" },
@@ -30066,7 +29946,6 @@ function sv_default() {
     localeError: error36()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/ta.js
 var error37 = () => {
   const Sizable = {
     string: { unit: "எழுத்துக்கள்", verb: "கொண்டிருக்க வேண்டும்" },
@@ -30183,7 +30062,6 @@ function ta_default() {
     localeError: error37()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/th.js
 var error38 = () => {
   const Sizable = {
     string: { unit: "ตัวอักษร", verb: "ควรมี" },
@@ -30300,7 +30178,6 @@ function th_default() {
     localeError: error38()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/tr.js
 var parsedType7 = (data) => {
   const t = typeof data;
   switch (t) {
@@ -30415,7 +30292,6 @@ function tr_default() {
     localeError: error39()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/uk.js
 var error40 = () => {
   const Sizable = {
     string: { unit: "символів", verb: "матиме" },
@@ -30531,12 +30407,9 @@ function uk_default() {
     localeError: error40()
   };
 }
-
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/ua.js
 function ua_default() {
   return uk_default();
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/ur.js
 var error41 = () => {
   const Sizable = {
     string: { unit: "حروف", verb: "ہونا" },
@@ -30653,7 +30526,6 @@ function ur_default() {
     localeError: error41()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/vi.js
 var error42 = () => {
   const Sizable = {
     string: { unit: "ký tự", verb: "có" },
@@ -30769,7 +30641,6 @@ function vi_default() {
     localeError: error42()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/zh-CN.js
 var error43 = () => {
   const Sizable = {
     string: { unit: "字符", verb: "包含" },
@@ -30885,7 +30756,6 @@ function zh_CN_default() {
     localeError: error43()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/zh-TW.js
 var error44 = () => {
   const Sizable = {
     string: { unit: "字元", verb: "擁有" },
@@ -31002,7 +30872,6 @@ function zh_TW_default() {
     localeError: error44()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/locales/yo.js
 var error45 = () => {
   const Sizable = {
     string: { unit: "àmi", verb: "ní" },
@@ -31117,7 +30986,6 @@ function yo_default() {
     localeError: error45()
   };
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/registries.js
 var _a;
 var $output = Symbol("ZodOutput");
 var $input = Symbol("ZodInput");
@@ -31170,7 +31038,6 @@ function registry() {
 }
 (_a = globalThis).__zod_globalRegistry ?? (_a.__zod_globalRegistry = registry());
 var globalRegistry = globalThis.__zod_globalRegistry;
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/api.js
 function _string(Class2, params) {
   return new Class2({
     type: "string",
@@ -32082,7 +31949,7 @@ function _stringFormat(Class2, format, fnOrRegex, _params = {}) {
   const inst = new Class2(def);
   return inst;
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/to-json-schema.js
+
 class JSONSchemaGenerator {
   constructor(params) {
     this.counter = 0;
@@ -32842,11 +32709,9 @@ function isTransforming(_schema, _ctx) {
   }
   return false;
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/json-schema.js
 var exports_json_schema = {};
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/classic/iso.js
 var exports_iso = {};
-__export(exports_iso, {
+__export2(exports_iso, {
   time: () => time2,
   duration: () => duration2,
   datetime: () => datetime2,
@@ -32884,8 +32749,6 @@ var ZodISODuration = /* @__PURE__ */ $constructor("ZodISODuration", (inst, def) 
 function duration2(params) {
   return _isoDuration(ZodISODuration, params);
 }
-
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/classic/errors.js
 var initializer2 = (inst, issues) => {
   $ZodError.init(inst, issues);
   inst.name = "ZodError";
@@ -32919,8 +32782,6 @@ var ZodError = $constructor("ZodError", initializer2);
 var ZodRealError = $constructor("ZodError", initializer2, {
   Parent: Error
 });
-
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/classic/parse.js
 var parse3 = /* @__PURE__ */ _parse(ZodRealError);
 var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
 var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
@@ -32933,8 +32794,6 @@ var safeEncode2 = /* @__PURE__ */ _safeEncode(ZodRealError);
 var safeDecode2 = /* @__PURE__ */ _safeDecode(ZodRealError);
 var safeEncodeAsync2 = /* @__PURE__ */ _safeEncodeAsync(ZodRealError);
 var safeDecodeAsync2 = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
-
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/classic/schemas.js
 var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
   $ZodType.init(inst, def);
   inst.def = def;
@@ -33911,7 +33770,6 @@ function json(params) {
 function preprocess(fn, schema) {
   return pipe(transform(fn), schema);
 }
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/classic/compat.js
 var ZodIssueCode = {
   invalid_type: "invalid_type",
   too_big: "too_big",
@@ -33935,9 +33793,8 @@ function getErrorMap() {
 }
 var ZodFirstPartyTypeKind;
 (function(ZodFirstPartyTypeKind2) {})(ZodFirstPartyTypeKind || (ZodFirstPartyTypeKind = {}));
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/classic/coerce.js
 var exports_coerce = {};
-__export(exports_coerce, {
+__export2(exports_coerce, {
   string: () => string3,
   number: () => number3,
   date: () => date4,
@@ -33959,10 +33816,7 @@ function bigint3(params) {
 function date4(params) {
   return _coercedDate(ZodDate, params);
 }
-
-// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/classic/external.js
 config(en_default());
-// ../api/dist/src/game/manifest.js
 var ManifestAuthor = object({
   display_name: string2(),
   recurse_id: number2().optional()
@@ -33982,9 +33836,7 @@ var Manifest = object({
   authors: union([ManifestAuthor, array(ManifestAuthor).min(1)]),
   dependencies: array(ManifestDependency)
 });
-// ../api/dist/src/game/index.js
-var import_semver = __toESM(require_semver2(), 1);
-// ../api/dist/src/schema.js
+var import_semver = __toESM2(require_semver2(), 1);
 var GameAuthorResponse = exports_external.object({
   display_name: exports_external.string(),
   recurse_id: exports_external.number().nullable().optional()
@@ -34016,6 +33868,7 @@ var GameResponse = exports_external.object({
   versions: exports_external.array(GameVersionResponse)
 });
 var GamesResponse = exports_external.array(GameResponse);
+
 // src/index.ts
 import * as fs12 from "fs";
 
@@ -34076,11 +33929,11 @@ class Pipe {
   dest;
   opts;
   ondrain;
-  constructor(src2, dest, opts) {
-    this.src = src2;
+  constructor(src, dest, opts) {
+    this.src = src;
     this.dest = dest;
     this.opts = opts;
-    this.ondrain = () => src2[RESUME]();
+    this.ondrain = () => src[RESUME]();
     this.dest.on("drain", this.ondrain);
   }
   unpipe() {
@@ -34099,10 +33952,10 @@ class PipeProxyErrors extends Pipe {
     this.src.removeListener("error", this.proxyErrors);
     super.unpipe();
   }
-  constructor(src2, dest, opts) {
-    super(src2, dest, opts);
+  constructor(src, dest, opts) {
+    super(src, dest, opts);
     this.proxyErrors = (er) => dest.emit("error", er);
-    src2.on("error", this.proxyErrors);
+    src.on("error", this.proxyErrors);
   }
 }
 var isObjectModeOptions = (o) => !!o.objectMode;
@@ -35070,7 +34923,7 @@ import path3 from "node:path";
 
 // ../node_modules/.bun/tar@7.5.2/node_modules/tar/dist/esm/list.js
 import fs2 from "node:fs";
-import { dirname, parse as parse6 } from "path";
+import { dirname, parse as parse4 } from "path";
 
 // ../node_modules/.bun/tar@7.5.2/node_modules/tar/dist/esm/options.js
 var argmap = new Map([
@@ -35600,7 +35453,7 @@ var encodeNegative = (num, buf) => {
     }
   }
 };
-var parse5 = (buf) => {
+var parse2 = (buf) => {
   const pre = buf[0];
   const value = pre === 128 ? pos(buf.subarray(1, buf.length)) : pre === 255 ? twos(buf) : null;
   if (value === null) {
@@ -35861,7 +35714,7 @@ var splitPrefix = (p, prefixSize) => {
 var decString = (buf, off, size) => buf.subarray(off, off + size).toString("utf8").replace(/\0.*/, "");
 var decDate = (buf, off, size) => numToDate(decNumber(buf, off, size));
 var numToDate = (num) => num === undefined ? undefined : new Date(num * 1000);
-var decNumber = (buf, off, size) => Number(buf[off]) & 128 ? parse5(buf.subarray(off, off + size)) : decSmallNumber(buf, off, size);
+var decNumber = (buf, off, size) => Number(buf[off]) & 128 ? parse2(buf.subarray(off, off + size)) : decSmallNumber(buf, off, size);
 var nanUndef = (value) => isNaN(value) ? undefined : value;
 var decSmallNumber = (buf, off, size) => nanUndef(parseInt(buf.subarray(off, off + size).toString("utf8").replace(/\0.*$/, "").trim(), 8));
 var MAXNUM = {
@@ -36637,7 +36490,7 @@ var filesFilter = (opt, files) => {
   const map2 = new Map(files.map((f) => [stripTrailingSlashes(f), true]));
   const filter = opt.filter;
   const mapHas = (file2, r = "") => {
-    const root = r || parse6(file2).root || ".";
+    const root = r || parse4(file2).root || ".";
     let ret;
     if (file2 === root)
       ret = false;
@@ -36687,12 +36540,12 @@ var listFileSync = (opt) => {
   }
 };
 var listFile = (opt, _files) => {
-  const parse7 = new Parser(opt);
+  const parse5 = new Parser(opt);
   const readSize = opt.maxReadSize || 16 * 1024 * 1024;
   const file2 = opt.file;
   const p = new Promise((resolve, reject) => {
-    parse7.on("error", reject);
-    parse7.on("end", resolve);
+    parse5.on("error", reject);
+    parse5.on("end", resolve);
     fs2.stat(file2, (er, stat) => {
       if (er) {
         reject(er);
@@ -36702,7 +36555,7 @@ var listFile = (opt, _files) => {
           size: stat.size
         });
         stream.on("error", reject);
-        stream.pipe(parse7);
+        stream.pipe(parse5);
       }
     });
   });
@@ -36744,15 +36597,15 @@ var modeFix = (mode, isDir, portable) => {
 
 // ../node_modules/.bun/tar@7.5.2/node_modules/tar/dist/esm/strip-absolute-path.js
 import { win32 } from "node:path";
-var { isAbsolute, parse: parse7 } = win32;
+var { isAbsolute, parse: parse6 } = win32;
 var stripAbsolutePath = (path) => {
   let r = "";
-  let parsed = parse7(path);
+  let parsed = parse6(path);
   while (isAbsolute(path) || parsed.root) {
     const root = path.charAt(0) === "/" && path.slice(0, 4) !== "//?/" ? "/" : parsed.root;
     path = path.slice(root.length);
     r += root;
-    parsed = parse7(path);
+    parsed = parse6(path);
   }
   return [r, path];
 };
@@ -36762,7 +36615,7 @@ var raw = ["|", "<", ">", "?", ":"];
 var win = raw.map((char) => String.fromCharCode(61440 + char.charCodeAt(0)));
 var toWin = new Map(raw.map((char, i) => [char, win[i]]));
 var toRaw = new Map(win.map((char, i) => [char, raw[i]]));
-var encode4 = (s) => raw.reduce((s2, c) => s2.split(c).join(toWin.get(c)), s);
+var encode5 = (s) => raw.reduce((s2, c) => s2.split(c).join(toWin.get(c)), s);
 var decode3 = (s) => win.reduce((s2, c) => s2.split(c).join(toRaw.get(c)), s);
 
 // ../node_modules/.bun/tar@7.5.2/node_modules/tar/dist/esm/write-entry.js
@@ -38805,9 +38658,9 @@ class Unpack extends Parser {
     }
     if (this.win32) {
       const { root: aRoot } = path6.win32.parse(String(entry.absolute));
-      entry.absolute = aRoot + encode4(String(entry.absolute).slice(aRoot.length));
+      entry.absolute = aRoot + encode5(String(entry.absolute).slice(aRoot.length));
       const { root: pRoot } = path6.win32.parse(entry.path);
-      entry.path = pRoot + encode4(entry.path.slice(pRoot.length));
+      entry.path = pRoot + encode5(entry.path.slice(pRoot.length));
     }
     return true;
   }
@@ -39504,12 +39357,3540 @@ import { resolve, basename as basename2, join as join2 } from "path";
 
 // src/api-client.ts
 var core2 = __toESM(require_core(), 1);
+
+// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/core.js
+var NEVER2 = Object.freeze({
+  status: "aborted"
+});
+function $constructor2(name2, initializer3, params) {
+  function init(inst, def) {
+    if (!inst._zod) {
+      Object.defineProperty(inst, "_zod", {
+        value: {
+          def,
+          constr: _,
+          traits: new Set
+        },
+        enumerable: false
+      });
+    }
+    if (inst._zod.traits.has(name2)) {
+      return;
+    }
+    inst._zod.traits.add(name2);
+    initializer3(inst, def);
+    const proto = _.prototype;
+    const keys = Object.keys(proto);
+    for (let i = 0;i < keys.length; i++) {
+      const k = keys[i];
+      if (!(k in inst)) {
+        inst[k] = proto[k].bind(inst);
+      }
+    }
+  }
+  const Parent = params?.Parent ?? Object;
+
+  class Definition extends Parent {
+  }
+  Object.defineProperty(Definition, "name", { value: name2 });
+  function _(def) {
+    var _a2;
+    const inst = params?.Parent ? new Definition : this;
+    init(inst, def);
+    (_a2 = inst._zod).deferred ?? (_a2.deferred = []);
+    for (const fn of inst._zod.deferred) {
+      fn();
+    }
+    return inst;
+  }
+  Object.defineProperty(_, "init", { value: init });
+  Object.defineProperty(_, Symbol.hasInstance, {
+    value: (inst) => {
+      if (params?.Parent && inst instanceof params.Parent)
+        return true;
+      return inst?._zod?.traits?.has(name2);
+    }
+  });
+  Object.defineProperty(_, "name", { value: name2 });
+  return _;
+}
+var $brand2 = Symbol("zod_brand");
+
+class $ZodAsyncError2 extends Error {
+  constructor() {
+    super(`Encountered Promise during synchronous parse. Use .parseAsync() instead.`);
+  }
+}
+
+class $ZodEncodeError2 extends Error {
+  constructor(name2) {
+    super(`Encountered unidirectional transform during encode: ${name2}`);
+    this.name = "ZodEncodeError";
+  }
+}
+var globalConfig2 = {};
+function config2(newConfig) {
+  if (newConfig)
+    Object.assign(globalConfig2, newConfig);
+  return globalConfig2;
+}
+// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/util.js
+var exports_util2 = {};
+__export(exports_util2, {
+  unwrapMessage: () => unwrapMessage2,
+  uint8ArrayToHex: () => uint8ArrayToHex2,
+  uint8ArrayToBase64url: () => uint8ArrayToBase64url2,
+  uint8ArrayToBase64: () => uint8ArrayToBase642,
+  stringifyPrimitive: () => stringifyPrimitive2,
+  slugify: () => slugify2,
+  shallowClone: () => shallowClone2,
+  safeExtend: () => safeExtend2,
+  required: () => required2,
+  randomString: () => randomString2,
+  propertyKeyTypes: () => propertyKeyTypes2,
+  promiseAllObject: () => promiseAllObject2,
+  primitiveTypes: () => primitiveTypes2,
+  prefixIssues: () => prefixIssues2,
+  pick: () => pick2,
+  partial: () => partial2,
+  optionalKeys: () => optionalKeys2,
+  omit: () => omit2,
+  objectClone: () => objectClone2,
+  numKeys: () => numKeys2,
+  nullish: () => nullish3,
+  normalizeParams: () => normalizeParams2,
+  mergeDefs: () => mergeDefs2,
+  merge: () => merge3,
+  jsonStringifyReplacer: () => jsonStringifyReplacer2,
+  joinValues: () => joinValues2,
+  issue: () => issue2,
+  isPlainObject: () => isPlainObject2,
+  isObject: () => isObject2,
+  hexToUint8Array: () => hexToUint8Array2,
+  getSizableOrigin: () => getSizableOrigin2,
+  getParsedType: () => getParsedType2,
+  getLengthableOrigin: () => getLengthableOrigin2,
+  getEnumValues: () => getEnumValues2,
+  getElementAtPath: () => getElementAtPath2,
+  floatSafeRemainder: () => floatSafeRemainder2,
+  finalizeIssue: () => finalizeIssue2,
+  extend: () => extend2,
+  escapeRegex: () => escapeRegex2,
+  esc: () => esc2,
+  defineLazy: () => defineLazy2,
+  createTransparentProxy: () => createTransparentProxy2,
+  cloneDef: () => cloneDef2,
+  clone: () => clone2,
+  cleanRegex: () => cleanRegex2,
+  cleanEnum: () => cleanEnum2,
+  captureStackTrace: () => captureStackTrace2,
+  cached: () => cached2,
+  base64urlToUint8Array: () => base64urlToUint8Array2,
+  base64ToUint8Array: () => base64ToUint8Array2,
+  assignProp: () => assignProp2,
+  assertNotEqual: () => assertNotEqual2,
+  assertNever: () => assertNever2,
+  assertIs: () => assertIs2,
+  assertEqual: () => assertEqual2,
+  assert: () => assert4,
+  allowsEval: () => allowsEval2,
+  aborted: () => aborted2,
+  NUMBER_FORMAT_RANGES: () => NUMBER_FORMAT_RANGES2,
+  Class: () => Class2,
+  BIGINT_FORMAT_RANGES: () => BIGINT_FORMAT_RANGES2
+});
+function assertEqual2(val) {
+  return val;
+}
+function assertNotEqual2(val) {
+  return val;
+}
+function assertIs2(_arg) {}
+function assertNever2(_x) {
+  throw new Error;
+}
+function assert4(_) {}
+function getEnumValues2(entries) {
+  const numericValues = Object.values(entries).filter((v) => typeof v === "number");
+  const values = Object.entries(entries).filter(([k, _]) => numericValues.indexOf(+k) === -1).map(([_, v]) => v);
+  return values;
+}
+function joinValues2(array2, separator = "|") {
+  return array2.map((val) => stringifyPrimitive2(val)).join(separator);
+}
+function jsonStringifyReplacer2(_, value) {
+  if (typeof value === "bigint")
+    return value.toString();
+  return value;
+}
+function cached2(getter) {
+  const set2 = false;
+  return {
+    get value() {
+      if (!set2) {
+        const value = getter();
+        Object.defineProperty(this, "value", { value });
+        return value;
+      }
+      throw new Error("cached value already set");
+    }
+  };
+}
+function nullish3(input) {
+  return input === null || input === undefined;
+}
+function cleanRegex2(source) {
+  const start = source.startsWith("^") ? 1 : 0;
+  const end = source.endsWith("$") ? source.length - 1 : source.length;
+  return source.slice(start, end);
+}
+function floatSafeRemainder2(val, step) {
+  const valDecCount = (val.toString().split(".")[1] || "").length;
+  const stepString = step.toString();
+  let stepDecCount = (stepString.split(".")[1] || "").length;
+  if (stepDecCount === 0 && /\d?e-\d?/.test(stepString)) {
+    const match = stepString.match(/\d?e-(\d?)/);
+    if (match?.[1]) {
+      stepDecCount = Number.parseInt(match[1]);
+    }
+  }
+  const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
+  const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
+  const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
+  return valInt % stepInt / 10 ** decCount;
+}
+var EVALUATING2 = Symbol("evaluating");
+function defineLazy2(object2, key, getter) {
+  let value = undefined;
+  Object.defineProperty(object2, key, {
+    get() {
+      if (value === EVALUATING2) {
+        return;
+      }
+      if (value === undefined) {
+        value = EVALUATING2;
+        value = getter();
+      }
+      return value;
+    },
+    set(v) {
+      Object.defineProperty(object2, key, {
+        value: v
+      });
+    },
+    configurable: true
+  });
+}
+function objectClone2(obj) {
+  return Object.create(Object.getPrototypeOf(obj), Object.getOwnPropertyDescriptors(obj));
+}
+function assignProp2(target, prop, value) {
+  Object.defineProperty(target, prop, {
+    value,
+    writable: true,
+    enumerable: true,
+    configurable: true
+  });
+}
+function mergeDefs2(...defs) {
+  const mergedDescriptors = {};
+  for (const def of defs) {
+    const descriptors = Object.getOwnPropertyDescriptors(def);
+    Object.assign(mergedDescriptors, descriptors);
+  }
+  return Object.defineProperties({}, mergedDescriptors);
+}
+function cloneDef2(schema) {
+  return mergeDefs2(schema._zod.def);
+}
+function getElementAtPath2(obj, path8) {
+  if (!path8)
+    return obj;
+  return path8.reduce((acc, key) => acc?.[key], obj);
+}
+function promiseAllObject2(promisesObj) {
+  const keys = Object.keys(promisesObj);
+  const promises = keys.map((key) => promisesObj[key]);
+  return Promise.all(promises).then((results) => {
+    const resolvedObj = {};
+    for (let i = 0;i < keys.length; i++) {
+      resolvedObj[keys[i]] = results[i];
+    }
+    return resolvedObj;
+  });
+}
+function randomString2(length = 10) {
+  const chars = "abcdefghijklmnopqrstuvwxyz";
+  let str = "";
+  for (let i = 0;i < length; i++) {
+    str += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return str;
+}
+function esc2(str) {
+  return JSON.stringify(str);
+}
+function slugify2(input) {
+  return input.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "");
+}
+var captureStackTrace2 = "captureStackTrace" in Error ? Error.captureStackTrace : (..._args) => {};
+function isObject2(data) {
+  return typeof data === "object" && data !== null && !Array.isArray(data);
+}
+var allowsEval2 = cached2(() => {
+  if (typeof navigator !== "undefined" && navigator?.userAgent?.includes("Cloudflare")) {
+    return false;
+  }
+  try {
+    const F = Function;
+    new F("");
+    return true;
+  } catch (_) {
+    return false;
+  }
+});
+function isPlainObject2(o) {
+  if (isObject2(o) === false)
+    return false;
+  const ctor = o.constructor;
+  if (ctor === undefined)
+    return true;
+  if (typeof ctor !== "function")
+    return true;
+  const prot = ctor.prototype;
+  if (isObject2(prot) === false)
+    return false;
+  if (Object.prototype.hasOwnProperty.call(prot, "isPrototypeOf") === false) {
+    return false;
+  }
+  return true;
+}
+function shallowClone2(o) {
+  if (isPlainObject2(o))
+    return { ...o };
+  if (Array.isArray(o))
+    return [...o];
+  return o;
+}
+function numKeys2(data) {
+  let keyCount = 0;
+  for (const key in data) {
+    if (Object.prototype.hasOwnProperty.call(data, key)) {
+      keyCount++;
+    }
+  }
+  return keyCount;
+}
+var getParsedType2 = (data) => {
+  const t = typeof data;
+  switch (t) {
+    case "undefined":
+      return "undefined";
+    case "string":
+      return "string";
+    case "number":
+      return Number.isNaN(data) ? "nan" : "number";
+    case "boolean":
+      return "boolean";
+    case "function":
+      return "function";
+    case "bigint":
+      return "bigint";
+    case "symbol":
+      return "symbol";
+    case "object":
+      if (Array.isArray(data)) {
+        return "array";
+      }
+      if (data === null) {
+        return "null";
+      }
+      if (data.then && typeof data.then === "function" && data.catch && typeof data.catch === "function") {
+        return "promise";
+      }
+      if (typeof Map !== "undefined" && data instanceof Map) {
+        return "map";
+      }
+      if (typeof Set !== "undefined" && data instanceof Set) {
+        return "set";
+      }
+      if (typeof Date !== "undefined" && data instanceof Date) {
+        return "date";
+      }
+      if (typeof File !== "undefined" && data instanceof File) {
+        return "file";
+      }
+      return "object";
+    default:
+      throw new Error(`Unknown data type: ${t}`);
+  }
+};
+var propertyKeyTypes2 = new Set(["string", "number", "symbol"]);
+var primitiveTypes2 = new Set(["string", "number", "bigint", "boolean", "symbol", "undefined"]);
+function escapeRegex2(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function clone2(inst, def, params) {
+  const cl = new inst._zod.constr(def ?? inst._zod.def);
+  if (!def || params?.parent)
+    cl._zod.parent = inst;
+  return cl;
+}
+function normalizeParams2(_params) {
+  const params = _params;
+  if (!params)
+    return {};
+  if (typeof params === "string")
+    return { error: () => params };
+  if (params?.message !== undefined) {
+    if (params?.error !== undefined)
+      throw new Error("Cannot specify both `message` and `error` params");
+    params.error = params.message;
+  }
+  delete params.message;
+  if (typeof params.error === "string")
+    return { ...params, error: () => params.error };
+  return params;
+}
+function createTransparentProxy2(getter) {
+  let target;
+  return new Proxy({}, {
+    get(_, prop, receiver) {
+      target ?? (target = getter());
+      return Reflect.get(target, prop, receiver);
+    },
+    set(_, prop, value, receiver) {
+      target ?? (target = getter());
+      return Reflect.set(target, prop, value, receiver);
+    },
+    has(_, prop) {
+      target ?? (target = getter());
+      return Reflect.has(target, prop);
+    },
+    deleteProperty(_, prop) {
+      target ?? (target = getter());
+      return Reflect.deleteProperty(target, prop);
+    },
+    ownKeys(_) {
+      target ?? (target = getter());
+      return Reflect.ownKeys(target);
+    },
+    getOwnPropertyDescriptor(_, prop) {
+      target ?? (target = getter());
+      return Reflect.getOwnPropertyDescriptor(target, prop);
+    },
+    defineProperty(_, prop, descriptor) {
+      target ?? (target = getter());
+      return Reflect.defineProperty(target, prop, descriptor);
+    }
+  });
+}
+function stringifyPrimitive2(value) {
+  if (typeof value === "bigint")
+    return value.toString() + "n";
+  if (typeof value === "string")
+    return `"${value}"`;
+  return `${value}`;
+}
+function optionalKeys2(shape) {
+  return Object.keys(shape).filter((k) => {
+    return shape[k]._zod.optin === "optional" && shape[k]._zod.optout === "optional";
+  });
+}
+var NUMBER_FORMAT_RANGES2 = {
+  safeint: [Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
+  int32: [-2147483648, 2147483647],
+  uint32: [0, 4294967295],
+  float32: [-340282346638528860000000000000000000000, 340282346638528860000000000000000000000],
+  float64: [-Number.MAX_VALUE, Number.MAX_VALUE]
+};
+var BIGINT_FORMAT_RANGES2 = {
+  int64: [/* @__PURE__ */ BigInt("-9223372036854775808"), /* @__PURE__ */ BigInt("9223372036854775807")],
+  uint64: [/* @__PURE__ */ BigInt(0), /* @__PURE__ */ BigInt("18446744073709551615")]
+};
+function pick2(schema, mask) {
+  const currDef = schema._zod.def;
+  const def = mergeDefs2(schema._zod.def, {
+    get shape() {
+      const newShape = {};
+      for (const key in mask) {
+        if (!(key in currDef.shape)) {
+          throw new Error(`Unrecognized key: "${key}"`);
+        }
+        if (!mask[key])
+          continue;
+        newShape[key] = currDef.shape[key];
+      }
+      assignProp2(this, "shape", newShape);
+      return newShape;
+    },
+    checks: []
+  });
+  return clone2(schema, def);
+}
+function omit2(schema, mask) {
+  const currDef = schema._zod.def;
+  const def = mergeDefs2(schema._zod.def, {
+    get shape() {
+      const newShape = { ...schema._zod.def.shape };
+      for (const key in mask) {
+        if (!(key in currDef.shape)) {
+          throw new Error(`Unrecognized key: "${key}"`);
+        }
+        if (!mask[key])
+          continue;
+        delete newShape[key];
+      }
+      assignProp2(this, "shape", newShape);
+      return newShape;
+    },
+    checks: []
+  });
+  return clone2(schema, def);
+}
+function extend2(schema, shape) {
+  if (!isPlainObject2(shape)) {
+    throw new Error("Invalid input to extend: expected a plain object");
+  }
+  const checks = schema._zod.def.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error("Object schemas containing refinements cannot be extended. Use `.safeExtend()` instead.");
+  }
+  const def = mergeDefs2(schema._zod.def, {
+    get shape() {
+      const _shape = { ...schema._zod.def.shape, ...shape };
+      assignProp2(this, "shape", _shape);
+      return _shape;
+    },
+    checks: []
+  });
+  return clone2(schema, def);
+}
+function safeExtend2(schema, shape) {
+  if (!isPlainObject2(shape)) {
+    throw new Error("Invalid input to safeExtend: expected a plain object");
+  }
+  const def = {
+    ...schema._zod.def,
+    get shape() {
+      const _shape = { ...schema._zod.def.shape, ...shape };
+      assignProp2(this, "shape", _shape);
+      return _shape;
+    },
+    checks: schema._zod.def.checks
+  };
+  return clone2(schema, def);
+}
+function merge3(a, b) {
+  const def = mergeDefs2(a._zod.def, {
+    get shape() {
+      const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
+      assignProp2(this, "shape", _shape);
+      return _shape;
+    },
+    get catchall() {
+      return b._zod.def.catchall;
+    },
+    checks: []
+  });
+  return clone2(a, def);
+}
+function partial2(Class2, schema, mask) {
+  const def = mergeDefs2(schema._zod.def, {
+    get shape() {
+      const oldShape = schema._zod.def.shape;
+      const shape = { ...oldShape };
+      if (mask) {
+        for (const key in mask) {
+          if (!(key in oldShape)) {
+            throw new Error(`Unrecognized key: "${key}"`);
+          }
+          if (!mask[key])
+            continue;
+          shape[key] = Class2 ? new Class2({
+            type: "optional",
+            innerType: oldShape[key]
+          }) : oldShape[key];
+        }
+      } else {
+        for (const key in oldShape) {
+          shape[key] = Class2 ? new Class2({
+            type: "optional",
+            innerType: oldShape[key]
+          }) : oldShape[key];
+        }
+      }
+      assignProp2(this, "shape", shape);
+      return shape;
+    },
+    checks: []
+  });
+  return clone2(schema, def);
+}
+function required2(Class2, schema, mask) {
+  const def = mergeDefs2(schema._zod.def, {
+    get shape() {
+      const oldShape = schema._zod.def.shape;
+      const shape = { ...oldShape };
+      if (mask) {
+        for (const key in mask) {
+          if (!(key in shape)) {
+            throw new Error(`Unrecognized key: "${key}"`);
+          }
+          if (!mask[key])
+            continue;
+          shape[key] = new Class2({
+            type: "nonoptional",
+            innerType: oldShape[key]
+          });
+        }
+      } else {
+        for (const key in oldShape) {
+          shape[key] = new Class2({
+            type: "nonoptional",
+            innerType: oldShape[key]
+          });
+        }
+      }
+      assignProp2(this, "shape", shape);
+      return shape;
+    },
+    checks: []
+  });
+  return clone2(schema, def);
+}
+function aborted2(x, startIndex = 0) {
+  if (x.aborted === true)
+    return true;
+  for (let i = startIndex;i < x.issues.length; i++) {
+    if (x.issues[i]?.continue !== true) {
+      return true;
+    }
+  }
+  return false;
+}
+function prefixIssues2(path8, issues) {
+  return issues.map((iss) => {
+    var _a2;
+    (_a2 = iss).path ?? (_a2.path = []);
+    iss.path.unshift(path8);
+    return iss;
+  });
+}
+function unwrapMessage2(message) {
+  return typeof message === "string" ? message : message?.message;
+}
+function finalizeIssue2(iss, ctx, config3) {
+  const full = { ...iss, path: iss.path ?? [] };
+  if (!iss.message) {
+    const message = unwrapMessage2(iss.inst?._zod.def?.error?.(iss)) ?? unwrapMessage2(ctx?.error?.(iss)) ?? unwrapMessage2(config3.customError?.(iss)) ?? unwrapMessage2(config3.localeError?.(iss)) ?? "Invalid input";
+    full.message = message;
+  }
+  delete full.inst;
+  delete full.continue;
+  if (!ctx?.reportInput) {
+    delete full.input;
+  }
+  return full;
+}
+function getSizableOrigin2(input) {
+  if (input instanceof Set)
+    return "set";
+  if (input instanceof Map)
+    return "map";
+  if (input instanceof File)
+    return "file";
+  return "unknown";
+}
+function getLengthableOrigin2(input) {
+  if (Array.isArray(input))
+    return "array";
+  if (typeof input === "string")
+    return "string";
+  return "unknown";
+}
+function issue2(...args) {
+  const [iss, input, inst] = args;
+  if (typeof iss === "string") {
+    return {
+      message: iss,
+      code: "custom",
+      input,
+      inst
+    };
+  }
+  return { ...iss };
+}
+function cleanEnum2(obj) {
+  return Object.entries(obj).filter(([k, _]) => {
+    return Number.isNaN(Number.parseInt(k, 10));
+  }).map((el) => el[1]);
+}
+function base64ToUint8Array2(base643) {
+  const binaryString = atob(base643);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0;i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+function uint8ArrayToBase642(bytes) {
+  let binaryString = "";
+  for (let i = 0;i < bytes.length; i++) {
+    binaryString += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binaryString);
+}
+function base64urlToUint8Array2(base64url3) {
+  const base643 = base64url3.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = "=".repeat((4 - base643.length % 4) % 4);
+  return base64ToUint8Array2(base643 + padding);
+}
+function uint8ArrayToBase64url2(bytes) {
+  return uint8ArrayToBase642(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+function hexToUint8Array2(hex3) {
+  const cleanHex = hex3.replace(/^0x/, "");
+  if (cleanHex.length % 2 !== 0) {
+    throw new Error("Invalid hex string length");
+  }
+  const bytes = new Uint8Array(cleanHex.length / 2);
+  for (let i = 0;i < cleanHex.length; i += 2) {
+    bytes[i / 2] = Number.parseInt(cleanHex.slice(i, i + 2), 16);
+  }
+  return bytes;
+}
+function uint8ArrayToHex2(bytes) {
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+class Class2 {
+  constructor(..._args) {}
+}
+
+// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/errors.js
+var initializer3 = (inst, def) => {
+  inst.name = "$ZodError";
+  Object.defineProperty(inst, "_zod", {
+    value: inst._zod,
+    enumerable: false
+  });
+  Object.defineProperty(inst, "issues", {
+    value: def,
+    enumerable: false
+  });
+  inst.message = JSON.stringify(def, jsonStringifyReplacer2, 2);
+  Object.defineProperty(inst, "toString", {
+    value: () => inst.message,
+    enumerable: false
+  });
+};
+var $ZodError2 = $constructor2("$ZodError", initializer3);
+var $ZodRealError2 = $constructor2("$ZodError", initializer3, { Parent: Error });
+function flattenError2(error46, mapper = (issue3) => issue3.message) {
+  const fieldErrors = {};
+  const formErrors = [];
+  for (const sub of error46.issues) {
+    if (sub.path.length > 0) {
+      fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
+      fieldErrors[sub.path[0]].push(mapper(sub));
+    } else {
+      formErrors.push(mapper(sub));
+    }
+  }
+  return { formErrors, fieldErrors };
+}
+function formatError2(error46, mapper = (issue3) => issue3.message) {
+  const fieldErrors = { _errors: [] };
+  const processError = (error47) => {
+    for (const issue3 of error47.issues) {
+      if (issue3.code === "invalid_union" && issue3.errors.length) {
+        issue3.errors.map((issues) => processError({ issues }));
+      } else if (issue3.code === "invalid_key") {
+        processError({ issues: issue3.issues });
+      } else if (issue3.code === "invalid_element") {
+        processError({ issues: issue3.issues });
+      } else if (issue3.path.length === 0) {
+        fieldErrors._errors.push(mapper(issue3));
+      } else {
+        let curr = fieldErrors;
+        let i = 0;
+        while (i < issue3.path.length) {
+          const el = issue3.path[i];
+          const terminal = i === issue3.path.length - 1;
+          if (!terminal) {
+            curr[el] = curr[el] || { _errors: [] };
+          } else {
+            curr[el] = curr[el] || { _errors: [] };
+            curr[el]._errors.push(mapper(issue3));
+          }
+          curr = curr[el];
+          i++;
+        }
+      }
+    }
+  };
+  processError(error46);
+  return fieldErrors;
+}
+
+// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/parse.js
+var _parse2 = (_Err) => (schema, value, _ctx, _params) => {
+  const ctx = _ctx ? Object.assign(_ctx, { async: false }) : { async: false };
+  const result = schema._zod.run({ value, issues: [] }, ctx);
+  if (result instanceof Promise) {
+    throw new $ZodAsyncError2;
+  }
+  if (result.issues.length) {
+    const e = new (_params?.Err ?? _Err)(result.issues.map((iss) => finalizeIssue2(iss, ctx, config2())));
+    captureStackTrace2(e, _params?.callee);
+    throw e;
+  }
+  return result.value;
+};
+var _parseAsync2 = (_Err) => async (schema, value, _ctx, params) => {
+  const ctx = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
+  let result = schema._zod.run({ value, issues: [] }, ctx);
+  if (result instanceof Promise)
+    result = await result;
+  if (result.issues.length) {
+    const e = new (params?.Err ?? _Err)(result.issues.map((iss) => finalizeIssue2(iss, ctx, config2())));
+    captureStackTrace2(e, params?.callee);
+    throw e;
+  }
+  return result.value;
+};
+var _safeParse2 = (_Err) => (schema, value, _ctx) => {
+  const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
+  const result = schema._zod.run({ value, issues: [] }, ctx);
+  if (result instanceof Promise) {
+    throw new $ZodAsyncError2;
+  }
+  return result.issues.length ? {
+    success: false,
+    error: new (_Err ?? $ZodError2)(result.issues.map((iss) => finalizeIssue2(iss, ctx, config2())))
+  } : { success: true, data: result.value };
+};
+var safeParse3 = /* @__PURE__ */ _safeParse2($ZodRealError2);
+var _safeParseAsync2 = (_Err) => async (schema, value, _ctx) => {
+  const ctx = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
+  let result = schema._zod.run({ value, issues: [] }, ctx);
+  if (result instanceof Promise)
+    result = await result;
+  return result.issues.length ? {
+    success: false,
+    error: new _Err(result.issues.map((iss) => finalizeIssue2(iss, ctx, config2())))
+  } : { success: true, data: result.value };
+};
+var safeParseAsync3 = /* @__PURE__ */ _safeParseAsync2($ZodRealError2);
+var _encode2 = (_Err) => (schema, value, _ctx) => {
+  const ctx = _ctx ? Object.assign(_ctx, { direction: "backward" }) : { direction: "backward" };
+  return _parse2(_Err)(schema, value, ctx);
+};
+var _decode2 = (_Err) => (schema, value, _ctx) => {
+  return _parse2(_Err)(schema, value, _ctx);
+};
+var _encodeAsync2 = (_Err) => async (schema, value, _ctx) => {
+  const ctx = _ctx ? Object.assign(_ctx, { direction: "backward" }) : { direction: "backward" };
+  return _parseAsync2(_Err)(schema, value, ctx);
+};
+var _decodeAsync2 = (_Err) => async (schema, value, _ctx) => {
+  return _parseAsync2(_Err)(schema, value, _ctx);
+};
+var _safeEncode2 = (_Err) => (schema, value, _ctx) => {
+  const ctx = _ctx ? Object.assign(_ctx, { direction: "backward" }) : { direction: "backward" };
+  return _safeParse2(_Err)(schema, value, ctx);
+};
+var _safeDecode2 = (_Err) => (schema, value, _ctx) => {
+  return _safeParse2(_Err)(schema, value, _ctx);
+};
+var _safeEncodeAsync2 = (_Err) => async (schema, value, _ctx) => {
+  const ctx = _ctx ? Object.assign(_ctx, { direction: "backward" }) : { direction: "backward" };
+  return _safeParseAsync2(_Err)(schema, value, ctx);
+};
+var _safeDecodeAsync2 = (_Err) => async (schema, value, _ctx) => {
+  return _safeParseAsync2(_Err)(schema, value, _ctx);
+};
+// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/regexes.js
+var cuid4 = /^[cC][^\s-]{8,}$/;
+var cuid23 = /^[0-9a-z]+$/;
+var ulid3 = /^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/;
+var xid3 = /^[0-9a-vA-V]{20}$/;
+var ksuid3 = /^[A-Za-z0-9]{27}$/;
+var nanoid3 = /^[a-zA-Z0-9_-]{21}$/;
+var duration3 = /^P(?:(\d+W)|(?!.*W)(?=\d|T\d)(\d+Y)?(\d+M)?(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+([.,]\d+)?S)?)?)$/;
+var guid3 = /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/;
+var uuid3 = (version2) => {
+  if (!version2)
+    return /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/;
+  return new RegExp(`^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-${version2}[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$`);
+};
+var email3 = /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/;
+var _emoji3 = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
+function emoji3() {
+  return new RegExp(_emoji3, "u");
+}
+var ipv43 = /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
+var ipv63 = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/;
+var cidrv43 = /^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\/([0-9]|[1-2][0-9]|3[0-2])$/;
+var cidrv63 = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::|([0-9a-fA-F]{1,4})?::([0-9a-fA-F]{1,4}:?){0,6})\/(12[0-8]|1[01][0-9]|[1-9]?[0-9])$/;
+var base643 = /^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$/;
+var base64url3 = /^[A-Za-z0-9_-]*$/;
+var e1643 = /^\+(?:[0-9]){6,14}[0-9]$/;
+var dateSource2 = `(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))`;
+var date5 = /* @__PURE__ */ new RegExp(`^${dateSource2}$`);
+function timeSource2(args) {
+  const hhmm = `(?:[01]\\d|2[0-3]):[0-5]\\d`;
+  const regex = typeof args.precision === "number" ? args.precision === -1 ? `${hhmm}` : args.precision === 0 ? `${hhmm}:[0-5]\\d` : `${hhmm}:[0-5]\\d\\.\\d{${args.precision}}` : `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`;
+  return regex;
+}
+function time3(args) {
+  return new RegExp(`^${timeSource2(args)}$`);
+}
+function datetime3(args) {
+  const time4 = timeSource2({ precision: args.precision });
+  const opts = ["Z"];
+  if (args.local)
+    opts.push("");
+  if (args.offset)
+    opts.push(`([+-](?:[01]\\d|2[0-3]):[0-5]\\d)`);
+  const timeRegex = `${time4}(?:${opts.join("|")})`;
+  return new RegExp(`^${dateSource2}T(?:${timeRegex})$`);
+}
+var string4 = (params) => {
+  const regex = params ? `[\\s\\S]{${params?.minimum ?? 0},${params?.maximum ?? ""}}` : `[\\s\\S]*`;
+  return new RegExp(`^${regex}$`);
+};
+var integer2 = /^-?\d+$/;
+var number4 = /^-?\d+(?:\.\d+)?/;
+var lowercase2 = /^[^A-Z]*$/;
+var uppercase2 = /^[^a-z]*$/;
+
+// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/checks.js
+var $ZodCheck2 = /* @__PURE__ */ $constructor2("$ZodCheck", (inst, def) => {
+  var _a2;
+  inst._zod ?? (inst._zod = {});
+  inst._zod.def = def;
+  (_a2 = inst._zod).onattach ?? (_a2.onattach = []);
+});
+var numericOriginMap2 = {
+  number: "number",
+  bigint: "bigint",
+  object: "date"
+};
+var $ZodCheckLessThan2 = /* @__PURE__ */ $constructor2("$ZodCheckLessThan", (inst, def) => {
+  $ZodCheck2.init(inst, def);
+  const origin = numericOriginMap2[typeof def.value];
+  inst._zod.onattach.push((inst2) => {
+    const bag = inst2._zod.bag;
+    const curr = (def.inclusive ? bag.maximum : bag.exclusiveMaximum) ?? Number.POSITIVE_INFINITY;
+    if (def.value < curr) {
+      if (def.inclusive)
+        bag.maximum = def.value;
+      else
+        bag.exclusiveMaximum = def.value;
+    }
+  });
+  inst._zod.check = (payload) => {
+    if (def.inclusive ? payload.value <= def.value : payload.value < def.value) {
+      return;
+    }
+    payload.issues.push({
+      origin,
+      code: "too_big",
+      maximum: def.value,
+      input: payload.value,
+      inclusive: def.inclusive,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckGreaterThan2 = /* @__PURE__ */ $constructor2("$ZodCheckGreaterThan", (inst, def) => {
+  $ZodCheck2.init(inst, def);
+  const origin = numericOriginMap2[typeof def.value];
+  inst._zod.onattach.push((inst2) => {
+    const bag = inst2._zod.bag;
+    const curr = (def.inclusive ? bag.minimum : bag.exclusiveMinimum) ?? Number.NEGATIVE_INFINITY;
+    if (def.value > curr) {
+      if (def.inclusive)
+        bag.minimum = def.value;
+      else
+        bag.exclusiveMinimum = def.value;
+    }
+  });
+  inst._zod.check = (payload) => {
+    if (def.inclusive ? payload.value >= def.value : payload.value > def.value) {
+      return;
+    }
+    payload.issues.push({
+      origin,
+      code: "too_small",
+      minimum: def.value,
+      input: payload.value,
+      inclusive: def.inclusive,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckMultipleOf2 = /* @__PURE__ */ $constructor2("$ZodCheckMultipleOf", (inst, def) => {
+  $ZodCheck2.init(inst, def);
+  inst._zod.onattach.push((inst2) => {
+    var _a2;
+    (_a2 = inst2._zod.bag).multipleOf ?? (_a2.multipleOf = def.value);
+  });
+  inst._zod.check = (payload) => {
+    if (typeof payload.value !== typeof def.value)
+      throw new Error("Cannot mix number and bigint in multiple_of check.");
+    const isMultiple = typeof payload.value === "bigint" ? payload.value % def.value === BigInt(0) : floatSafeRemainder2(payload.value, def.value) === 0;
+    if (isMultiple)
+      return;
+    payload.issues.push({
+      origin: typeof payload.value,
+      code: "not_multiple_of",
+      divisor: def.value,
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckNumberFormat2 = /* @__PURE__ */ $constructor2("$ZodCheckNumberFormat", (inst, def) => {
+  $ZodCheck2.init(inst, def);
+  def.format = def.format || "float64";
+  const isInt = def.format?.includes("int");
+  const origin = isInt ? "int" : "number";
+  const [minimum, maximum] = NUMBER_FORMAT_RANGES2[def.format];
+  inst._zod.onattach.push((inst2) => {
+    const bag = inst2._zod.bag;
+    bag.format = def.format;
+    bag.minimum = minimum;
+    bag.maximum = maximum;
+    if (isInt)
+      bag.pattern = integer2;
+  });
+  inst._zod.check = (payload) => {
+    const input = payload.value;
+    if (isInt) {
+      if (!Number.isInteger(input)) {
+        payload.issues.push({
+          expected: origin,
+          format: def.format,
+          code: "invalid_type",
+          continue: false,
+          input,
+          inst
+        });
+        return;
+      }
+      if (!Number.isSafeInteger(input)) {
+        if (input > 0) {
+          payload.issues.push({
+            input,
+            code: "too_big",
+            maximum: Number.MAX_SAFE_INTEGER,
+            note: "Integers must be within the safe integer range.",
+            inst,
+            origin,
+            continue: !def.abort
+          });
+        } else {
+          payload.issues.push({
+            input,
+            code: "too_small",
+            minimum: Number.MIN_SAFE_INTEGER,
+            note: "Integers must be within the safe integer range.",
+            inst,
+            origin,
+            continue: !def.abort
+          });
+        }
+        return;
+      }
+    }
+    if (input < minimum) {
+      payload.issues.push({
+        origin: "number",
+        input,
+        code: "too_small",
+        minimum,
+        inclusive: true,
+        inst,
+        continue: !def.abort
+      });
+    }
+    if (input > maximum) {
+      payload.issues.push({
+        origin: "number",
+        input,
+        code: "too_big",
+        maximum,
+        inst
+      });
+    }
+  };
+});
+var $ZodCheckMaxLength2 = /* @__PURE__ */ $constructor2("$ZodCheckMaxLength", (inst, def) => {
+  var _a2;
+  $ZodCheck2.init(inst, def);
+  (_a2 = inst._zod.def).when ?? (_a2.when = (payload) => {
+    const val = payload.value;
+    return !nullish3(val) && val.length !== undefined;
+  });
+  inst._zod.onattach.push((inst2) => {
+    const curr = inst2._zod.bag.maximum ?? Number.POSITIVE_INFINITY;
+    if (def.maximum < curr)
+      inst2._zod.bag.maximum = def.maximum;
+  });
+  inst._zod.check = (payload) => {
+    const input = payload.value;
+    const length = input.length;
+    if (length <= def.maximum)
+      return;
+    const origin = getLengthableOrigin2(input);
+    payload.issues.push({
+      origin,
+      code: "too_big",
+      maximum: def.maximum,
+      inclusive: true,
+      input,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckMinLength2 = /* @__PURE__ */ $constructor2("$ZodCheckMinLength", (inst, def) => {
+  var _a2;
+  $ZodCheck2.init(inst, def);
+  (_a2 = inst._zod.def).when ?? (_a2.when = (payload) => {
+    const val = payload.value;
+    return !nullish3(val) && val.length !== undefined;
+  });
+  inst._zod.onattach.push((inst2) => {
+    const curr = inst2._zod.bag.minimum ?? Number.NEGATIVE_INFINITY;
+    if (def.minimum > curr)
+      inst2._zod.bag.minimum = def.minimum;
+  });
+  inst._zod.check = (payload) => {
+    const input = payload.value;
+    const length = input.length;
+    if (length >= def.minimum)
+      return;
+    const origin = getLengthableOrigin2(input);
+    payload.issues.push({
+      origin,
+      code: "too_small",
+      minimum: def.minimum,
+      inclusive: true,
+      input,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckLengthEquals2 = /* @__PURE__ */ $constructor2("$ZodCheckLengthEquals", (inst, def) => {
+  var _a2;
+  $ZodCheck2.init(inst, def);
+  (_a2 = inst._zod.def).when ?? (_a2.when = (payload) => {
+    const val = payload.value;
+    return !nullish3(val) && val.length !== undefined;
+  });
+  inst._zod.onattach.push((inst2) => {
+    const bag = inst2._zod.bag;
+    bag.minimum = def.length;
+    bag.maximum = def.length;
+    bag.length = def.length;
+  });
+  inst._zod.check = (payload) => {
+    const input = payload.value;
+    const length = input.length;
+    if (length === def.length)
+      return;
+    const origin = getLengthableOrigin2(input);
+    const tooBig = length > def.length;
+    payload.issues.push({
+      origin,
+      ...tooBig ? { code: "too_big", maximum: def.length } : { code: "too_small", minimum: def.length },
+      inclusive: true,
+      exact: true,
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckStringFormat2 = /* @__PURE__ */ $constructor2("$ZodCheckStringFormat", (inst, def) => {
+  var _a2, _b;
+  $ZodCheck2.init(inst, def);
+  inst._zod.onattach.push((inst2) => {
+    const bag = inst2._zod.bag;
+    bag.format = def.format;
+    if (def.pattern) {
+      bag.patterns ?? (bag.patterns = new Set);
+      bag.patterns.add(def.pattern);
+    }
+  });
+  if (def.pattern)
+    (_a2 = inst._zod).check ?? (_a2.check = (payload) => {
+      def.pattern.lastIndex = 0;
+      if (def.pattern.test(payload.value))
+        return;
+      payload.issues.push({
+        origin: "string",
+        code: "invalid_format",
+        format: def.format,
+        input: payload.value,
+        ...def.pattern ? { pattern: def.pattern.toString() } : {},
+        inst,
+        continue: !def.abort
+      });
+    });
+  else
+    (_b = inst._zod).check ?? (_b.check = () => {});
+});
+var $ZodCheckRegex2 = /* @__PURE__ */ $constructor2("$ZodCheckRegex", (inst, def) => {
+  $ZodCheckStringFormat2.init(inst, def);
+  inst._zod.check = (payload) => {
+    def.pattern.lastIndex = 0;
+    if (def.pattern.test(payload.value))
+      return;
+    payload.issues.push({
+      origin: "string",
+      code: "invalid_format",
+      format: "regex",
+      input: payload.value,
+      pattern: def.pattern.toString(),
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckLowerCase2 = /* @__PURE__ */ $constructor2("$ZodCheckLowerCase", (inst, def) => {
+  def.pattern ?? (def.pattern = lowercase2);
+  $ZodCheckStringFormat2.init(inst, def);
+});
+var $ZodCheckUpperCase2 = /* @__PURE__ */ $constructor2("$ZodCheckUpperCase", (inst, def) => {
+  def.pattern ?? (def.pattern = uppercase2);
+  $ZodCheckStringFormat2.init(inst, def);
+});
+var $ZodCheckIncludes2 = /* @__PURE__ */ $constructor2("$ZodCheckIncludes", (inst, def) => {
+  $ZodCheck2.init(inst, def);
+  const escapedRegex = escapeRegex2(def.includes);
+  const pattern = new RegExp(typeof def.position === "number" ? `^.{${def.position}}${escapedRegex}` : escapedRegex);
+  def.pattern = pattern;
+  inst._zod.onattach.push((inst2) => {
+    const bag = inst2._zod.bag;
+    bag.patterns ?? (bag.patterns = new Set);
+    bag.patterns.add(pattern);
+  });
+  inst._zod.check = (payload) => {
+    if (payload.value.includes(def.includes, def.position))
+      return;
+    payload.issues.push({
+      origin: "string",
+      code: "invalid_format",
+      format: "includes",
+      includes: def.includes,
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckStartsWith2 = /* @__PURE__ */ $constructor2("$ZodCheckStartsWith", (inst, def) => {
+  $ZodCheck2.init(inst, def);
+  const pattern = new RegExp(`^${escapeRegex2(def.prefix)}.*`);
+  def.pattern ?? (def.pattern = pattern);
+  inst._zod.onattach.push((inst2) => {
+    const bag = inst2._zod.bag;
+    bag.patterns ?? (bag.patterns = new Set);
+    bag.patterns.add(pattern);
+  });
+  inst._zod.check = (payload) => {
+    if (payload.value.startsWith(def.prefix))
+      return;
+    payload.issues.push({
+      origin: "string",
+      code: "invalid_format",
+      format: "starts_with",
+      prefix: def.prefix,
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckEndsWith2 = /* @__PURE__ */ $constructor2("$ZodCheckEndsWith", (inst, def) => {
+  $ZodCheck2.init(inst, def);
+  const pattern = new RegExp(`.*${escapeRegex2(def.suffix)}$`);
+  def.pattern ?? (def.pattern = pattern);
+  inst._zod.onattach.push((inst2) => {
+    const bag = inst2._zod.bag;
+    bag.patterns ?? (bag.patterns = new Set);
+    bag.patterns.add(pattern);
+  });
+  inst._zod.check = (payload) => {
+    if (payload.value.endsWith(def.suffix))
+      return;
+    payload.issues.push({
+      origin: "string",
+      code: "invalid_format",
+      format: "ends_with",
+      suffix: def.suffix,
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckOverwrite2 = /* @__PURE__ */ $constructor2("$ZodCheckOverwrite", (inst, def) => {
+  $ZodCheck2.init(inst, def);
+  inst._zod.check = (payload) => {
+    payload.value = def.tx(payload.value);
+  };
+});
+
+// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/doc.js
+class Doc2 {
+  constructor(args = []) {
+    this.content = [];
+    this.indent = 0;
+    if (this)
+      this.args = args;
+  }
+  indented(fn) {
+    this.indent += 1;
+    fn(this);
+    this.indent -= 1;
+  }
+  write(arg) {
+    if (typeof arg === "function") {
+      arg(this, { execution: "sync" });
+      arg(this, { execution: "async" });
+      return;
+    }
+    const content = arg;
+    const lines = content.split(`
+`).filter((x) => x);
+    const minIndent = Math.min(...lines.map((x) => x.length - x.trimStart().length));
+    const dedented = lines.map((x) => x.slice(minIndent)).map((x) => " ".repeat(this.indent * 2) + x);
+    for (const line of dedented) {
+      this.content.push(line);
+    }
+  }
+  compile() {
+    const F = Function;
+    const args = this?.args;
+    const content = this?.content ?? [``];
+    const lines = [...content.map((x) => `  ${x}`)];
+    return new F(...args, lines.join(`
+`));
+  }
+}
+
+// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/versions.js
+var version2 = {
+  major: 4,
+  minor: 1,
+  patch: 13
+};
+
+// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/schemas.js
+var $ZodType2 = /* @__PURE__ */ $constructor2("$ZodType", (inst, def) => {
+  var _a2;
+  inst ?? (inst = {});
+  inst._zod.def = def;
+  inst._zod.bag = inst._zod.bag || {};
+  inst._zod.version = version2;
+  const checks = [...inst._zod.def.checks ?? []];
+  if (inst._zod.traits.has("$ZodCheck")) {
+    checks.unshift(inst);
+  }
+  for (const ch of checks) {
+    for (const fn of ch._zod.onattach) {
+      fn(inst);
+    }
+  }
+  if (checks.length === 0) {
+    (_a2 = inst._zod).deferred ?? (_a2.deferred = []);
+    inst._zod.deferred?.push(() => {
+      inst._zod.run = inst._zod.parse;
+    });
+  } else {
+    const runChecks = (payload, checks2, ctx) => {
+      let isAborted = aborted2(payload);
+      let asyncResult;
+      for (const ch of checks2) {
+        if (ch._zod.def.when) {
+          const shouldRun = ch._zod.def.when(payload);
+          if (!shouldRun)
+            continue;
+        } else if (isAborted) {
+          continue;
+        }
+        const currLen = payload.issues.length;
+        const _ = ch._zod.check(payload);
+        if (_ instanceof Promise && ctx?.async === false) {
+          throw new $ZodAsyncError2;
+        }
+        if (asyncResult || _ instanceof Promise) {
+          asyncResult = (asyncResult ?? Promise.resolve()).then(async () => {
+            await _;
+            const nextLen = payload.issues.length;
+            if (nextLen === currLen)
+              return;
+            if (!isAborted)
+              isAborted = aborted2(payload, currLen);
+          });
+        } else {
+          const nextLen = payload.issues.length;
+          if (nextLen === currLen)
+            continue;
+          if (!isAborted)
+            isAborted = aborted2(payload, currLen);
+        }
+      }
+      if (asyncResult) {
+        return asyncResult.then(() => {
+          return payload;
+        });
+      }
+      return payload;
+    };
+    const handleCanaryResult = (canary, payload, ctx) => {
+      if (aborted2(canary)) {
+        canary.aborted = true;
+        return canary;
+      }
+      const checkResult = runChecks(payload, checks, ctx);
+      if (checkResult instanceof Promise) {
+        if (ctx.async === false)
+          throw new $ZodAsyncError2;
+        return checkResult.then((checkResult2) => inst._zod.parse(checkResult2, ctx));
+      }
+      return inst._zod.parse(checkResult, ctx);
+    };
+    inst._zod.run = (payload, ctx) => {
+      if (ctx.skipChecks) {
+        return inst._zod.parse(payload, ctx);
+      }
+      if (ctx.direction === "backward") {
+        const canary = inst._zod.parse({ value: payload.value, issues: [] }, { ...ctx, skipChecks: true });
+        if (canary instanceof Promise) {
+          return canary.then((canary2) => {
+            return handleCanaryResult(canary2, payload, ctx);
+          });
+        }
+        return handleCanaryResult(canary, payload, ctx);
+      }
+      const result = inst._zod.parse(payload, ctx);
+      if (result instanceof Promise) {
+        if (ctx.async === false)
+          throw new $ZodAsyncError2;
+        return result.then((result2) => runChecks(result2, checks, ctx));
+      }
+      return runChecks(result, checks, ctx);
+    };
+  }
+  inst["~standard"] = {
+    validate: (value) => {
+      try {
+        const r = safeParse3(inst, value);
+        return r.success ? { value: r.data } : { issues: r.error?.issues };
+      } catch (_) {
+        return safeParseAsync3(inst, value).then((r) => r.success ? { value: r.data } : { issues: r.error?.issues });
+      }
+    },
+    vendor: "zod",
+    version: 1
+  };
+});
+var $ZodString2 = /* @__PURE__ */ $constructor2("$ZodString", (inst, def) => {
+  $ZodType2.init(inst, def);
+  inst._zod.pattern = [...inst?._zod.bag?.patterns ?? []].pop() ?? string4(inst._zod.bag);
+  inst._zod.parse = (payload, _) => {
+    if (def.coerce)
+      try {
+        payload.value = String(payload.value);
+      } catch (_2) {}
+    if (typeof payload.value === "string")
+      return payload;
+    payload.issues.push({
+      expected: "string",
+      code: "invalid_type",
+      input: payload.value,
+      inst
+    });
+    return payload;
+  };
+});
+var $ZodStringFormat2 = /* @__PURE__ */ $constructor2("$ZodStringFormat", (inst, def) => {
+  $ZodCheckStringFormat2.init(inst, def);
+  $ZodString2.init(inst, def);
+});
+var $ZodGUID2 = /* @__PURE__ */ $constructor2("$ZodGUID", (inst, def) => {
+  def.pattern ?? (def.pattern = guid3);
+  $ZodStringFormat2.init(inst, def);
+});
+var $ZodUUID2 = /* @__PURE__ */ $constructor2("$ZodUUID", (inst, def) => {
+  if (def.version) {
+    const versionMap = {
+      v1: 1,
+      v2: 2,
+      v3: 3,
+      v4: 4,
+      v5: 5,
+      v6: 6,
+      v7: 7,
+      v8: 8
+    };
+    const v = versionMap[def.version];
+    if (v === undefined)
+      throw new Error(`Invalid UUID version: "${def.version}"`);
+    def.pattern ?? (def.pattern = uuid3(v));
+  } else
+    def.pattern ?? (def.pattern = uuid3());
+  $ZodStringFormat2.init(inst, def);
+});
+var $ZodEmail2 = /* @__PURE__ */ $constructor2("$ZodEmail", (inst, def) => {
+  def.pattern ?? (def.pattern = email3);
+  $ZodStringFormat2.init(inst, def);
+});
+var $ZodURL2 = /* @__PURE__ */ $constructor2("$ZodURL", (inst, def) => {
+  $ZodStringFormat2.init(inst, def);
+  inst._zod.check = (payload) => {
+    try {
+      const trimmed = payload.value.trim();
+      const url2 = new URL(trimmed);
+      if (def.hostname) {
+        def.hostname.lastIndex = 0;
+        if (!def.hostname.test(url2.hostname)) {
+          payload.issues.push({
+            code: "invalid_format",
+            format: "url",
+            note: "Invalid hostname",
+            pattern: def.hostname.source,
+            input: payload.value,
+            inst,
+            continue: !def.abort
+          });
+        }
+      }
+      if (def.protocol) {
+        def.protocol.lastIndex = 0;
+        if (!def.protocol.test(url2.protocol.endsWith(":") ? url2.protocol.slice(0, -1) : url2.protocol)) {
+          payload.issues.push({
+            code: "invalid_format",
+            format: "url",
+            note: "Invalid protocol",
+            pattern: def.protocol.source,
+            input: payload.value,
+            inst,
+            continue: !def.abort
+          });
+        }
+      }
+      if (def.normalize) {
+        payload.value = url2.href;
+      } else {
+        payload.value = trimmed;
+      }
+      return;
+    } catch (_) {
+      payload.issues.push({
+        code: "invalid_format",
+        format: "url",
+        input: payload.value,
+        inst,
+        continue: !def.abort
+      });
+    }
+  };
+});
+var $ZodEmoji2 = /* @__PURE__ */ $constructor2("$ZodEmoji", (inst, def) => {
+  def.pattern ?? (def.pattern = emoji3());
+  $ZodStringFormat2.init(inst, def);
+});
+var $ZodNanoID2 = /* @__PURE__ */ $constructor2("$ZodNanoID", (inst, def) => {
+  def.pattern ?? (def.pattern = nanoid3);
+  $ZodStringFormat2.init(inst, def);
+});
+var $ZodCUID3 = /* @__PURE__ */ $constructor2("$ZodCUID", (inst, def) => {
+  def.pattern ?? (def.pattern = cuid4);
+  $ZodStringFormat2.init(inst, def);
+});
+var $ZodCUID22 = /* @__PURE__ */ $constructor2("$ZodCUID2", (inst, def) => {
+  def.pattern ?? (def.pattern = cuid23);
+  $ZodStringFormat2.init(inst, def);
+});
+var $ZodULID2 = /* @__PURE__ */ $constructor2("$ZodULID", (inst, def) => {
+  def.pattern ?? (def.pattern = ulid3);
+  $ZodStringFormat2.init(inst, def);
+});
+var $ZodXID2 = /* @__PURE__ */ $constructor2("$ZodXID", (inst, def) => {
+  def.pattern ?? (def.pattern = xid3);
+  $ZodStringFormat2.init(inst, def);
+});
+var $ZodKSUID2 = /* @__PURE__ */ $constructor2("$ZodKSUID", (inst, def) => {
+  def.pattern ?? (def.pattern = ksuid3);
+  $ZodStringFormat2.init(inst, def);
+});
+var $ZodISODateTime2 = /* @__PURE__ */ $constructor2("$ZodISODateTime", (inst, def) => {
+  def.pattern ?? (def.pattern = datetime3(def));
+  $ZodStringFormat2.init(inst, def);
+});
+var $ZodISODate2 = /* @__PURE__ */ $constructor2("$ZodISODate", (inst, def) => {
+  def.pattern ?? (def.pattern = date5);
+  $ZodStringFormat2.init(inst, def);
+});
+var $ZodISOTime2 = /* @__PURE__ */ $constructor2("$ZodISOTime", (inst, def) => {
+  def.pattern ?? (def.pattern = time3(def));
+  $ZodStringFormat2.init(inst, def);
+});
+var $ZodISODuration2 = /* @__PURE__ */ $constructor2("$ZodISODuration", (inst, def) => {
+  def.pattern ?? (def.pattern = duration3);
+  $ZodStringFormat2.init(inst, def);
+});
+var $ZodIPv42 = /* @__PURE__ */ $constructor2("$ZodIPv4", (inst, def) => {
+  def.pattern ?? (def.pattern = ipv43);
+  $ZodStringFormat2.init(inst, def);
+  inst._zod.bag.format = `ipv4`;
+});
+var $ZodIPv62 = /* @__PURE__ */ $constructor2("$ZodIPv6", (inst, def) => {
+  def.pattern ?? (def.pattern = ipv63);
+  $ZodStringFormat2.init(inst, def);
+  inst._zod.bag.format = `ipv6`;
+  inst._zod.check = (payload) => {
+    try {
+      new URL(`http://[${payload.value}]`);
+    } catch {
+      payload.issues.push({
+        code: "invalid_format",
+        format: "ipv6",
+        input: payload.value,
+        inst,
+        continue: !def.abort
+      });
+    }
+  };
+});
+var $ZodCIDRv42 = /* @__PURE__ */ $constructor2("$ZodCIDRv4", (inst, def) => {
+  def.pattern ?? (def.pattern = cidrv43);
+  $ZodStringFormat2.init(inst, def);
+});
+var $ZodCIDRv62 = /* @__PURE__ */ $constructor2("$ZodCIDRv6", (inst, def) => {
+  def.pattern ?? (def.pattern = cidrv63);
+  $ZodStringFormat2.init(inst, def);
+  inst._zod.check = (payload) => {
+    const parts = payload.value.split("/");
+    try {
+      if (parts.length !== 2)
+        throw new Error;
+      const [address, prefix] = parts;
+      if (!prefix)
+        throw new Error;
+      const prefixNum = Number(prefix);
+      if (`${prefixNum}` !== prefix)
+        throw new Error;
+      if (prefixNum < 0 || prefixNum > 128)
+        throw new Error;
+      new URL(`http://[${address}]`);
+    } catch {
+      payload.issues.push({
+        code: "invalid_format",
+        format: "cidrv6",
+        input: payload.value,
+        inst,
+        continue: !def.abort
+      });
+    }
+  };
+});
+function isValidBase642(data) {
+  if (data === "")
+    return true;
+  if (data.length % 4 !== 0)
+    return false;
+  try {
+    atob(data);
+    return true;
+  } catch {
+    return false;
+  }
+}
+var $ZodBase642 = /* @__PURE__ */ $constructor2("$ZodBase64", (inst, def) => {
+  def.pattern ?? (def.pattern = base643);
+  $ZodStringFormat2.init(inst, def);
+  inst._zod.bag.contentEncoding = "base64";
+  inst._zod.check = (payload) => {
+    if (isValidBase642(payload.value))
+      return;
+    payload.issues.push({
+      code: "invalid_format",
+      format: "base64",
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+function isValidBase64URL2(data) {
+  if (!base64url3.test(data))
+    return false;
+  const base644 = data.replace(/[-_]/g, (c) => c === "-" ? "+" : "/");
+  const padded = base644.padEnd(Math.ceil(base644.length / 4) * 4, "=");
+  return isValidBase642(padded);
+}
+var $ZodBase64URL2 = /* @__PURE__ */ $constructor2("$ZodBase64URL", (inst, def) => {
+  def.pattern ?? (def.pattern = base64url3);
+  $ZodStringFormat2.init(inst, def);
+  inst._zod.bag.contentEncoding = "base64url";
+  inst._zod.check = (payload) => {
+    if (isValidBase64URL2(payload.value))
+      return;
+    payload.issues.push({
+      code: "invalid_format",
+      format: "base64url",
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodE1642 = /* @__PURE__ */ $constructor2("$ZodE164", (inst, def) => {
+  def.pattern ?? (def.pattern = e1643);
+  $ZodStringFormat2.init(inst, def);
+});
+function isValidJWT2(token, algorithm = null) {
+  try {
+    const tokensParts = token.split(".");
+    if (tokensParts.length !== 3)
+      return false;
+    const [header2] = tokensParts;
+    if (!header2)
+      return false;
+    const parsedHeader = JSON.parse(atob(header2));
+    if ("typ" in parsedHeader && parsedHeader?.typ !== "JWT")
+      return false;
+    if (!parsedHeader.alg)
+      return false;
+    if (algorithm && (!("alg" in parsedHeader) || parsedHeader.alg !== algorithm))
+      return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+var $ZodJWT2 = /* @__PURE__ */ $constructor2("$ZodJWT", (inst, def) => {
+  $ZodStringFormat2.init(inst, def);
+  inst._zod.check = (payload) => {
+    if (isValidJWT2(payload.value, def.alg))
+      return;
+    payload.issues.push({
+      code: "invalid_format",
+      format: "jwt",
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodNumber2 = /* @__PURE__ */ $constructor2("$ZodNumber", (inst, def) => {
+  $ZodType2.init(inst, def);
+  inst._zod.pattern = inst._zod.bag.pattern ?? number4;
+  inst._zod.parse = (payload, _ctx) => {
+    if (def.coerce)
+      try {
+        payload.value = Number(payload.value);
+      } catch (_) {}
+    const input = payload.value;
+    if (typeof input === "number" && !Number.isNaN(input) && Number.isFinite(input)) {
+      return payload;
+    }
+    const received = typeof input === "number" ? Number.isNaN(input) ? "NaN" : !Number.isFinite(input) ? "Infinity" : undefined : undefined;
+    payload.issues.push({
+      expected: "number",
+      code: "invalid_type",
+      input,
+      inst,
+      ...received ? { received } : {}
+    });
+    return payload;
+  };
+});
+var $ZodNumberFormat2 = /* @__PURE__ */ $constructor2("$ZodNumberFormat", (inst, def) => {
+  $ZodCheckNumberFormat2.init(inst, def);
+  $ZodNumber2.init(inst, def);
+});
+var $ZodUnknown2 = /* @__PURE__ */ $constructor2("$ZodUnknown", (inst, def) => {
+  $ZodType2.init(inst, def);
+  inst._zod.parse = (payload) => payload;
+});
+var $ZodNever2 = /* @__PURE__ */ $constructor2("$ZodNever", (inst, def) => {
+  $ZodType2.init(inst, def);
+  inst._zod.parse = (payload, _ctx) => {
+    payload.issues.push({
+      expected: "never",
+      code: "invalid_type",
+      input: payload.value,
+      inst
+    });
+    return payload;
+  };
+});
+function handleArrayResult2(result, final, index) {
+  if (result.issues.length) {
+    final.issues.push(...prefixIssues2(index, result.issues));
+  }
+  final.value[index] = result.value;
+}
+var $ZodArray2 = /* @__PURE__ */ $constructor2("$ZodArray", (inst, def) => {
+  $ZodType2.init(inst, def);
+  inst._zod.parse = (payload, ctx) => {
+    const input = payload.value;
+    if (!Array.isArray(input)) {
+      payload.issues.push({
+        expected: "array",
+        code: "invalid_type",
+        input,
+        inst
+      });
+      return payload;
+    }
+    payload.value = Array(input.length);
+    const proms = [];
+    for (let i = 0;i < input.length; i++) {
+      const item = input[i];
+      const result = def.element._zod.run({
+        value: item,
+        issues: []
+      }, ctx);
+      if (result instanceof Promise) {
+        proms.push(result.then((result2) => handleArrayResult2(result2, payload, i)));
+      } else {
+        handleArrayResult2(result, payload, i);
+      }
+    }
+    if (proms.length) {
+      return Promise.all(proms).then(() => payload);
+    }
+    return payload;
+  };
+});
+function handlePropertyResult2(result, final, key, input) {
+  if (result.issues.length) {
+    final.issues.push(...prefixIssues2(key, result.issues));
+  }
+  if (result.value === undefined) {
+    if (key in input) {
+      final.value[key] = undefined;
+    }
+  } else {
+    final.value[key] = result.value;
+  }
+}
+function normalizeDef2(def) {
+  const keys = Object.keys(def.shape);
+  for (const k of keys) {
+    if (!def.shape?.[k]?._zod?.traits?.has("$ZodType")) {
+      throw new Error(`Invalid element at key "${k}": expected a Zod schema`);
+    }
+  }
+  const okeys = optionalKeys2(def.shape);
+  return {
+    ...def,
+    keys,
+    keySet: new Set(keys),
+    numKeys: keys.length,
+    optionalKeys: new Set(okeys)
+  };
+}
+function handleCatchall2(proms, input, payload, ctx, def, inst) {
+  const unrecognized = [];
+  const keySet = def.keySet;
+  const _catchall = def.catchall._zod;
+  const t = _catchall.def.type;
+  for (const key in input) {
+    if (keySet.has(key))
+      continue;
+    if (t === "never") {
+      unrecognized.push(key);
+      continue;
+    }
+    const r = _catchall.run({ value: input[key], issues: [] }, ctx);
+    if (r instanceof Promise) {
+      proms.push(r.then((r2) => handlePropertyResult2(r2, payload, key, input)));
+    } else {
+      handlePropertyResult2(r, payload, key, input);
+    }
+  }
+  if (unrecognized.length) {
+    payload.issues.push({
+      code: "unrecognized_keys",
+      keys: unrecognized,
+      input,
+      inst
+    });
+  }
+  if (!proms.length)
+    return payload;
+  return Promise.all(proms).then(() => {
+    return payload;
+  });
+}
+var $ZodObject2 = /* @__PURE__ */ $constructor2("$ZodObject", (inst, def) => {
+  $ZodType2.init(inst, def);
+  const desc2 = Object.getOwnPropertyDescriptor(def, "shape");
+  if (!desc2?.get) {
+    const sh = def.shape;
+    Object.defineProperty(def, "shape", {
+      get: () => {
+        const newSh = { ...sh };
+        Object.defineProperty(def, "shape", {
+          value: newSh
+        });
+        return newSh;
+      }
+    });
+  }
+  const _normalized = cached2(() => normalizeDef2(def));
+  defineLazy2(inst._zod, "propValues", () => {
+    const shape = def.shape;
+    const propValues = {};
+    for (const key in shape) {
+      const field = shape[key]._zod;
+      if (field.values) {
+        propValues[key] ?? (propValues[key] = new Set);
+        for (const v of field.values)
+          propValues[key].add(v);
+      }
+    }
+    return propValues;
+  });
+  const isObject3 = isObject2;
+  const catchall = def.catchall;
+  let value;
+  inst._zod.parse = (payload, ctx) => {
+    value ?? (value = _normalized.value);
+    const input = payload.value;
+    if (!isObject3(input)) {
+      payload.issues.push({
+        expected: "object",
+        code: "invalid_type",
+        input,
+        inst
+      });
+      return payload;
+    }
+    payload.value = {};
+    const proms = [];
+    const shape = value.shape;
+    for (const key of value.keys) {
+      const el = shape[key];
+      const r = el._zod.run({ value: input[key], issues: [] }, ctx);
+      if (r instanceof Promise) {
+        proms.push(r.then((r2) => handlePropertyResult2(r2, payload, key, input)));
+      } else {
+        handlePropertyResult2(r, payload, key, input);
+      }
+    }
+    if (!catchall) {
+      return proms.length ? Promise.all(proms).then(() => payload) : payload;
+    }
+    return handleCatchall2(proms, input, payload, ctx, _normalized.value, inst);
+  };
+});
+var $ZodObjectJIT2 = /* @__PURE__ */ $constructor2("$ZodObjectJIT", (inst, def) => {
+  $ZodObject2.init(inst, def);
+  const superParse = inst._zod.parse;
+  const _normalized = cached2(() => normalizeDef2(def));
+  const generateFastpass = (shape) => {
+    const doc = new Doc2(["shape", "payload", "ctx"]);
+    const normalized = _normalized.value;
+    const parseStr = (key) => {
+      const k = esc2(key);
+      return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
+    };
+    doc.write(`const input = payload.value;`);
+    const ids = Object.create(null);
+    let counter = 0;
+    for (const key of normalized.keys) {
+      ids[key] = `key_${counter++}`;
+    }
+    doc.write(`const newResult = {};`);
+    for (const key of normalized.keys) {
+      const id = ids[key];
+      const k = esc2(key);
+      doc.write(`const ${id} = ${parseStr(key)};`);
+      doc.write(`
+        if (${id}.issues.length) {
+          payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
+            ...iss,
+            path: iss.path ? [${k}, ...iss.path] : [${k}]
+          })));
+        }
+        
+        
+        if (${id}.value === undefined) {
+          if (${k} in input) {
+            newResult[${k}] = undefined;
+          }
+        } else {
+          newResult[${k}] = ${id}.value;
+        }
+        
+      `);
+    }
+    doc.write(`payload.value = newResult;`);
+    doc.write(`return payload;`);
+    const fn = doc.compile();
+    return (payload, ctx) => fn(shape, payload, ctx);
+  };
+  let fastpass;
+  const isObject3 = isObject2;
+  const jit = !globalConfig2.jitless;
+  const allowsEval3 = allowsEval2;
+  const fastEnabled = jit && allowsEval3.value;
+  const catchall = def.catchall;
+  let value;
+  inst._zod.parse = (payload, ctx) => {
+    value ?? (value = _normalized.value);
+    const input = payload.value;
+    if (!isObject3(input)) {
+      payload.issues.push({
+        expected: "object",
+        code: "invalid_type",
+        input,
+        inst
+      });
+      return payload;
+    }
+    if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
+      if (!fastpass)
+        fastpass = generateFastpass(def.shape);
+      payload = fastpass(payload, ctx);
+      if (!catchall)
+        return payload;
+      return handleCatchall2([], input, payload, ctx, value, inst);
+    }
+    return superParse(payload, ctx);
+  };
+});
+function handleUnionResults2(results, final, inst, ctx) {
+  for (const result of results) {
+    if (result.issues.length === 0) {
+      final.value = result.value;
+      return final;
+    }
+  }
+  const nonaborted = results.filter((r) => !aborted2(r));
+  if (nonaborted.length === 1) {
+    final.value = nonaborted[0].value;
+    return nonaborted[0];
+  }
+  final.issues.push({
+    code: "invalid_union",
+    input: final.value,
+    inst,
+    errors: results.map((result) => result.issues.map((iss) => finalizeIssue2(iss, ctx, config2())))
+  });
+  return final;
+}
+var $ZodUnion2 = /* @__PURE__ */ $constructor2("$ZodUnion", (inst, def) => {
+  $ZodType2.init(inst, def);
+  defineLazy2(inst._zod, "optin", () => def.options.some((o) => o._zod.optin === "optional") ? "optional" : undefined);
+  defineLazy2(inst._zod, "optout", () => def.options.some((o) => o._zod.optout === "optional") ? "optional" : undefined);
+  defineLazy2(inst._zod, "values", () => {
+    if (def.options.every((o) => o._zod.values)) {
+      return new Set(def.options.flatMap((option) => Array.from(option._zod.values)));
+    }
+    return;
+  });
+  defineLazy2(inst._zod, "pattern", () => {
+    if (def.options.every((o) => o._zod.pattern)) {
+      const patterns = def.options.map((o) => o._zod.pattern);
+      return new RegExp(`^(${patterns.map((p) => cleanRegex2(p.source)).join("|")})$`);
+    }
+    return;
+  });
+  const single = def.options.length === 1;
+  const first = def.options[0]._zod.run;
+  inst._zod.parse = (payload, ctx) => {
+    if (single) {
+      return first(payload, ctx);
+    }
+    let async = false;
+    const results = [];
+    for (const option of def.options) {
+      const result = option._zod.run({
+        value: payload.value,
+        issues: []
+      }, ctx);
+      if (result instanceof Promise) {
+        results.push(result);
+        async = true;
+      } else {
+        if (result.issues.length === 0)
+          return result;
+        results.push(result);
+      }
+    }
+    if (!async)
+      return handleUnionResults2(results, payload, inst, ctx);
+    return Promise.all(results).then((results2) => {
+      return handleUnionResults2(results2, payload, inst, ctx);
+    });
+  };
+});
+var $ZodIntersection2 = /* @__PURE__ */ $constructor2("$ZodIntersection", (inst, def) => {
+  $ZodType2.init(inst, def);
+  inst._zod.parse = (payload, ctx) => {
+    const input = payload.value;
+    const left = def.left._zod.run({ value: input, issues: [] }, ctx);
+    const right = def.right._zod.run({ value: input, issues: [] }, ctx);
+    const async = left instanceof Promise || right instanceof Promise;
+    if (async) {
+      return Promise.all([left, right]).then(([left2, right2]) => {
+        return handleIntersectionResults2(payload, left2, right2);
+      });
+    }
+    return handleIntersectionResults2(payload, left, right);
+  };
+});
+function mergeValues2(a, b) {
+  if (a === b) {
+    return { valid: true, data: a };
+  }
+  if (a instanceof Date && b instanceof Date && +a === +b) {
+    return { valid: true, data: a };
+  }
+  if (isPlainObject2(a) && isPlainObject2(b)) {
+    const bKeys = Object.keys(b);
+    const sharedKeys = Object.keys(a).filter((key) => bKeys.indexOf(key) !== -1);
+    const newObj = { ...a, ...b };
+    for (const key of sharedKeys) {
+      const sharedValue = mergeValues2(a[key], b[key]);
+      if (!sharedValue.valid) {
+        return {
+          valid: false,
+          mergeErrorPath: [key, ...sharedValue.mergeErrorPath]
+        };
+      }
+      newObj[key] = sharedValue.data;
+    }
+    return { valid: true, data: newObj };
+  }
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) {
+      return { valid: false, mergeErrorPath: [] };
+    }
+    const newArray = [];
+    for (let index = 0;index < a.length; index++) {
+      const itemA = a[index];
+      const itemB = b[index];
+      const sharedValue = mergeValues2(itemA, itemB);
+      if (!sharedValue.valid) {
+        return {
+          valid: false,
+          mergeErrorPath: [index, ...sharedValue.mergeErrorPath]
+        };
+      }
+      newArray.push(sharedValue.data);
+    }
+    return { valid: true, data: newArray };
+  }
+  return { valid: false, mergeErrorPath: [] };
+}
+function handleIntersectionResults2(result, left, right) {
+  if (left.issues.length) {
+    result.issues.push(...left.issues);
+  }
+  if (right.issues.length) {
+    result.issues.push(...right.issues);
+  }
+  if (aborted2(result))
+    return result;
+  const merged = mergeValues2(left.value, right.value);
+  if (!merged.valid) {
+    throw new Error(`Unmergable intersection. Error path: ` + `${JSON.stringify(merged.mergeErrorPath)}`);
+  }
+  result.value = merged.data;
+  return result;
+}
+var $ZodEnum2 = /* @__PURE__ */ $constructor2("$ZodEnum", (inst, def) => {
+  $ZodType2.init(inst, def);
+  const values = getEnumValues2(def.entries);
+  const valuesSet = new Set(values);
+  inst._zod.values = valuesSet;
+  inst._zod.pattern = new RegExp(`^(${values.filter((k) => propertyKeyTypes2.has(typeof k)).map((o) => typeof o === "string" ? escapeRegex2(o) : o.toString()).join("|")})$`);
+  inst._zod.parse = (payload, _ctx) => {
+    const input = payload.value;
+    if (valuesSet.has(input)) {
+      return payload;
+    }
+    payload.issues.push({
+      code: "invalid_value",
+      values,
+      input,
+      inst
+    });
+    return payload;
+  };
+});
+var $ZodTransform2 = /* @__PURE__ */ $constructor2("$ZodTransform", (inst, def) => {
+  $ZodType2.init(inst, def);
+  inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      throw new $ZodEncodeError2(inst.constructor.name);
+    }
+    const _out = def.transform(payload.value, payload);
+    if (ctx.async) {
+      const output = _out instanceof Promise ? _out : Promise.resolve(_out);
+      return output.then((output2) => {
+        payload.value = output2;
+        return payload;
+      });
+    }
+    if (_out instanceof Promise) {
+      throw new $ZodAsyncError2;
+    }
+    payload.value = _out;
+    return payload;
+  };
+});
+function handleOptionalResult2(result, input) {
+  if (result.issues.length && input === undefined) {
+    return { issues: [], value: undefined };
+  }
+  return result;
+}
+var $ZodOptional2 = /* @__PURE__ */ $constructor2("$ZodOptional", (inst, def) => {
+  $ZodType2.init(inst, def);
+  inst._zod.optin = "optional";
+  inst._zod.optout = "optional";
+  defineLazy2(inst._zod, "values", () => {
+    return def.innerType._zod.values ? new Set([...def.innerType._zod.values, undefined]) : undefined;
+  });
+  defineLazy2(inst._zod, "pattern", () => {
+    const pattern = def.innerType._zod.pattern;
+    return pattern ? new RegExp(`^(${cleanRegex2(pattern.source)})?$`) : undefined;
+  });
+  inst._zod.parse = (payload, ctx) => {
+    if (def.innerType._zod.optin === "optional") {
+      const result = def.innerType._zod.run(payload, ctx);
+      if (result instanceof Promise)
+        return result.then((r) => handleOptionalResult2(r, payload.value));
+      return handleOptionalResult2(result, payload.value);
+    }
+    if (payload.value === undefined) {
+      return payload;
+    }
+    return def.innerType._zod.run(payload, ctx);
+  };
+});
+var $ZodNullable2 = /* @__PURE__ */ $constructor2("$ZodNullable", (inst, def) => {
+  $ZodType2.init(inst, def);
+  defineLazy2(inst._zod, "optin", () => def.innerType._zod.optin);
+  defineLazy2(inst._zod, "optout", () => def.innerType._zod.optout);
+  defineLazy2(inst._zod, "pattern", () => {
+    const pattern = def.innerType._zod.pattern;
+    return pattern ? new RegExp(`^(${cleanRegex2(pattern.source)}|null)$`) : undefined;
+  });
+  defineLazy2(inst._zod, "values", () => {
+    return def.innerType._zod.values ? new Set([...def.innerType._zod.values, null]) : undefined;
+  });
+  inst._zod.parse = (payload, ctx) => {
+    if (payload.value === null)
+      return payload;
+    return def.innerType._zod.run(payload, ctx);
+  };
+});
+var $ZodDefault2 = /* @__PURE__ */ $constructor2("$ZodDefault", (inst, def) => {
+  $ZodType2.init(inst, def);
+  inst._zod.optin = "optional";
+  defineLazy2(inst._zod, "values", () => def.innerType._zod.values);
+  inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      return def.innerType._zod.run(payload, ctx);
+    }
+    if (payload.value === undefined) {
+      payload.value = def.defaultValue;
+      return payload;
+    }
+    const result = def.innerType._zod.run(payload, ctx);
+    if (result instanceof Promise) {
+      return result.then((result2) => handleDefaultResult2(result2, def));
+    }
+    return handleDefaultResult2(result, def);
+  };
+});
+function handleDefaultResult2(payload, def) {
+  if (payload.value === undefined) {
+    payload.value = def.defaultValue;
+  }
+  return payload;
+}
+var $ZodPrefault2 = /* @__PURE__ */ $constructor2("$ZodPrefault", (inst, def) => {
+  $ZodType2.init(inst, def);
+  inst._zod.optin = "optional";
+  defineLazy2(inst._zod, "values", () => def.innerType._zod.values);
+  inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      return def.innerType._zod.run(payload, ctx);
+    }
+    if (payload.value === undefined) {
+      payload.value = def.defaultValue;
+    }
+    return def.innerType._zod.run(payload, ctx);
+  };
+});
+var $ZodNonOptional2 = /* @__PURE__ */ $constructor2("$ZodNonOptional", (inst, def) => {
+  $ZodType2.init(inst, def);
+  defineLazy2(inst._zod, "values", () => {
+    const v = def.innerType._zod.values;
+    return v ? new Set([...v].filter((x) => x !== undefined)) : undefined;
+  });
+  inst._zod.parse = (payload, ctx) => {
+    const result = def.innerType._zod.run(payload, ctx);
+    if (result instanceof Promise) {
+      return result.then((result2) => handleNonOptionalResult2(result2, inst));
+    }
+    return handleNonOptionalResult2(result, inst);
+  };
+});
+function handleNonOptionalResult2(payload, inst) {
+  if (!payload.issues.length && payload.value === undefined) {
+    payload.issues.push({
+      code: "invalid_type",
+      expected: "nonoptional",
+      input: payload.value,
+      inst
+    });
+  }
+  return payload;
+}
+var $ZodCatch2 = /* @__PURE__ */ $constructor2("$ZodCatch", (inst, def) => {
+  $ZodType2.init(inst, def);
+  defineLazy2(inst._zod, "optin", () => def.innerType._zod.optin);
+  defineLazy2(inst._zod, "optout", () => def.innerType._zod.optout);
+  defineLazy2(inst._zod, "values", () => def.innerType._zod.values);
+  inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      return def.innerType._zod.run(payload, ctx);
+    }
+    const result = def.innerType._zod.run(payload, ctx);
+    if (result instanceof Promise) {
+      return result.then((result2) => {
+        payload.value = result2.value;
+        if (result2.issues.length) {
+          payload.value = def.catchValue({
+            ...payload,
+            error: {
+              issues: result2.issues.map((iss) => finalizeIssue2(iss, ctx, config2()))
+            },
+            input: payload.value
+          });
+          payload.issues = [];
+        }
+        return payload;
+      });
+    }
+    payload.value = result.value;
+    if (result.issues.length) {
+      payload.value = def.catchValue({
+        ...payload,
+        error: {
+          issues: result.issues.map((iss) => finalizeIssue2(iss, ctx, config2()))
+        },
+        input: payload.value
+      });
+      payload.issues = [];
+    }
+    return payload;
+  };
+});
+var $ZodPipe2 = /* @__PURE__ */ $constructor2("$ZodPipe", (inst, def) => {
+  $ZodType2.init(inst, def);
+  defineLazy2(inst._zod, "values", () => def.in._zod.values);
+  defineLazy2(inst._zod, "optin", () => def.in._zod.optin);
+  defineLazy2(inst._zod, "optout", () => def.out._zod.optout);
+  defineLazy2(inst._zod, "propValues", () => def.in._zod.propValues);
+  inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      const right = def.out._zod.run(payload, ctx);
+      if (right instanceof Promise) {
+        return right.then((right2) => handlePipeResult2(right2, def.in, ctx));
+      }
+      return handlePipeResult2(right, def.in, ctx);
+    }
+    const left = def.in._zod.run(payload, ctx);
+    if (left instanceof Promise) {
+      return left.then((left2) => handlePipeResult2(left2, def.out, ctx));
+    }
+    return handlePipeResult2(left, def.out, ctx);
+  };
+});
+function handlePipeResult2(left, next, ctx) {
+  if (left.issues.length) {
+    left.aborted = true;
+    return left;
+  }
+  return next._zod.run({ value: left.value, issues: left.issues }, ctx);
+}
+var $ZodReadonly2 = /* @__PURE__ */ $constructor2("$ZodReadonly", (inst, def) => {
+  $ZodType2.init(inst, def);
+  defineLazy2(inst._zod, "propValues", () => def.innerType._zod.propValues);
+  defineLazy2(inst._zod, "values", () => def.innerType._zod.values);
+  defineLazy2(inst._zod, "optin", () => def.innerType?._zod?.optin);
+  defineLazy2(inst._zod, "optout", () => def.innerType?._zod?.optout);
+  inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      return def.innerType._zod.run(payload, ctx);
+    }
+    const result = def.innerType._zod.run(payload, ctx);
+    if (result instanceof Promise) {
+      return result.then(handleReadonlyResult2);
+    }
+    return handleReadonlyResult2(result);
+  };
+});
+function handleReadonlyResult2(payload) {
+  payload.value = Object.freeze(payload.value);
+  return payload;
+}
+var $ZodCustom2 = /* @__PURE__ */ $constructor2("$ZodCustom", (inst, def) => {
+  $ZodCheck2.init(inst, def);
+  $ZodType2.init(inst, def);
+  inst._zod.parse = (payload, _) => {
+    return payload;
+  };
+  inst._zod.check = (payload) => {
+    const input = payload.value;
+    const r = def.fn(input);
+    if (r instanceof Promise) {
+      return r.then((r2) => handleRefineResult2(r2, payload, input, inst));
+    }
+    handleRefineResult2(r, payload, input, inst);
+    return;
+  };
+});
+function handleRefineResult2(result, payload, input, inst) {
+  if (!result) {
+    const _iss = {
+      code: "custom",
+      input,
+      inst,
+      path: [...inst._zod.def.path ?? []],
+      continue: !inst._zod.def.abort
+    };
+    if (inst._zod.def.params)
+      _iss.params = inst._zod.def.params;
+    payload.issues.push(issue2(_iss));
+  }
+}
+// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/registries.js
+var _a2;
+var $output2 = Symbol("ZodOutput");
+var $input2 = Symbol("ZodInput");
+
+class $ZodRegistry2 {
+  constructor() {
+    this._map = new WeakMap;
+    this._idmap = new Map;
+  }
+  add(schema, ..._meta) {
+    const meta3 = _meta[0];
+    this._map.set(schema, meta3);
+    if (meta3 && typeof meta3 === "object" && "id" in meta3) {
+      if (this._idmap.has(meta3.id)) {
+        throw new Error(`ID ${meta3.id} already exists in the registry`);
+      }
+      this._idmap.set(meta3.id, schema);
+    }
+    return this;
+  }
+  clear() {
+    this._map = new WeakMap;
+    this._idmap = new Map;
+    return this;
+  }
+  remove(schema) {
+    const meta3 = this._map.get(schema);
+    if (meta3 && typeof meta3 === "object" && "id" in meta3) {
+      this._idmap.delete(meta3.id);
+    }
+    this._map.delete(schema);
+    return this;
+  }
+  get(schema) {
+    const p = schema._zod.parent;
+    if (p) {
+      const pm = { ...this.get(p) ?? {} };
+      delete pm.id;
+      const f = { ...pm, ...this._map.get(schema) };
+      return Object.keys(f).length ? f : undefined;
+    }
+    return this._map.get(schema);
+  }
+  has(schema) {
+    return this._map.has(schema);
+  }
+}
+function registry2() {
+  return new $ZodRegistry2;
+}
+(_a2 = globalThis).__zod_globalRegistry ?? (_a2.__zod_globalRegistry = registry2());
+var globalRegistry2 = globalThis.__zod_globalRegistry;
+// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/core/api.js
+function _string2(Class3, params) {
+  return new Class3({
+    type: "string",
+    ...normalizeParams2(params)
+  });
+}
+function _email2(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "email",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _guid2(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "guid",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _uuid2(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "uuid",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _uuidv42(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "uuid",
+    check: "string_format",
+    abort: false,
+    version: "v4",
+    ...normalizeParams2(params)
+  });
+}
+function _uuidv62(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "uuid",
+    check: "string_format",
+    abort: false,
+    version: "v6",
+    ...normalizeParams2(params)
+  });
+}
+function _uuidv72(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "uuid",
+    check: "string_format",
+    abort: false,
+    version: "v7",
+    ...normalizeParams2(params)
+  });
+}
+function _url2(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "url",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _emoji5(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "emoji",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _nanoid2(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "nanoid",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _cuid3(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "cuid",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _cuid22(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "cuid2",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _ulid2(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "ulid",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _xid2(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "xid",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _ksuid2(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "ksuid",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _ipv42(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "ipv4",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _ipv62(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "ipv6",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _cidrv42(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "cidrv4",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _cidrv62(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "cidrv6",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _base642(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "base64",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _base64url2(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "base64url",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _e1642(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "e164",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _jwt2(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "jwt",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams2(params)
+  });
+}
+function _isoDateTime2(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "datetime",
+    check: "string_format",
+    offset: false,
+    local: false,
+    precision: null,
+    ...normalizeParams2(params)
+  });
+}
+function _isoDate2(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "date",
+    check: "string_format",
+    ...normalizeParams2(params)
+  });
+}
+function _isoTime2(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "time",
+    check: "string_format",
+    precision: null,
+    ...normalizeParams2(params)
+  });
+}
+function _isoDuration2(Class3, params) {
+  return new Class3({
+    type: "string",
+    format: "duration",
+    check: "string_format",
+    ...normalizeParams2(params)
+  });
+}
+function _number2(Class3, params) {
+  return new Class3({
+    type: "number",
+    checks: [],
+    ...normalizeParams2(params)
+  });
+}
+function _int2(Class3, params) {
+  return new Class3({
+    type: "number",
+    check: "number_format",
+    abort: false,
+    format: "safeint",
+    ...normalizeParams2(params)
+  });
+}
+function _unknown2(Class3) {
+  return new Class3({
+    type: "unknown"
+  });
+}
+function _never2(Class3, params) {
+  return new Class3({
+    type: "never",
+    ...normalizeParams2(params)
+  });
+}
+function _lt2(value, params) {
+  return new $ZodCheckLessThan2({
+    check: "less_than",
+    ...normalizeParams2(params),
+    value,
+    inclusive: false
+  });
+}
+function _lte2(value, params) {
+  return new $ZodCheckLessThan2({
+    check: "less_than",
+    ...normalizeParams2(params),
+    value,
+    inclusive: true
+  });
+}
+function _gt2(value, params) {
+  return new $ZodCheckGreaterThan2({
+    check: "greater_than",
+    ...normalizeParams2(params),
+    value,
+    inclusive: false
+  });
+}
+function _gte2(value, params) {
+  return new $ZodCheckGreaterThan2({
+    check: "greater_than",
+    ...normalizeParams2(params),
+    value,
+    inclusive: true
+  });
+}
+function _multipleOf2(value, params) {
+  return new $ZodCheckMultipleOf2({
+    check: "multiple_of",
+    ...normalizeParams2(params),
+    value
+  });
+}
+function _maxLength2(maximum, params) {
+  const ch = new $ZodCheckMaxLength2({
+    check: "max_length",
+    ...normalizeParams2(params),
+    maximum
+  });
+  return ch;
+}
+function _minLength2(minimum, params) {
+  return new $ZodCheckMinLength2({
+    check: "min_length",
+    ...normalizeParams2(params),
+    minimum
+  });
+}
+function _length2(length, params) {
+  return new $ZodCheckLengthEquals2({
+    check: "length_equals",
+    ...normalizeParams2(params),
+    length
+  });
+}
+function _regex2(pattern, params) {
+  return new $ZodCheckRegex2({
+    check: "string_format",
+    format: "regex",
+    ...normalizeParams2(params),
+    pattern
+  });
+}
+function _lowercase2(params) {
+  return new $ZodCheckLowerCase2({
+    check: "string_format",
+    format: "lowercase",
+    ...normalizeParams2(params)
+  });
+}
+function _uppercase2(params) {
+  return new $ZodCheckUpperCase2({
+    check: "string_format",
+    format: "uppercase",
+    ...normalizeParams2(params)
+  });
+}
+function _includes2(includes, params) {
+  return new $ZodCheckIncludes2({
+    check: "string_format",
+    format: "includes",
+    ...normalizeParams2(params),
+    includes
+  });
+}
+function _startsWith2(prefix, params) {
+  return new $ZodCheckStartsWith2({
+    check: "string_format",
+    format: "starts_with",
+    ...normalizeParams2(params),
+    prefix
+  });
+}
+function _endsWith2(suffix, params) {
+  return new $ZodCheckEndsWith2({
+    check: "string_format",
+    format: "ends_with",
+    ...normalizeParams2(params),
+    suffix
+  });
+}
+function _overwrite2(tx) {
+  return new $ZodCheckOverwrite2({
+    check: "overwrite",
+    tx
+  });
+}
+function _normalize2(form) {
+  return _overwrite2((input) => input.normalize(form));
+}
+function _trim2() {
+  return _overwrite2((input) => input.trim());
+}
+function _toLowerCase2() {
+  return _overwrite2((input) => input.toLowerCase());
+}
+function _toUpperCase2() {
+  return _overwrite2((input) => input.toUpperCase());
+}
+function _slugify2() {
+  return _overwrite2((input) => slugify2(input));
+}
+function _array2(Class3, element, params) {
+  return new Class3({
+    type: "array",
+    element,
+    ...normalizeParams2(params)
+  });
+}
+function _refine2(Class3, fn, _params) {
+  const schema = new Class3({
+    type: "custom",
+    check: "custom",
+    fn,
+    ...normalizeParams2(_params)
+  });
+  return schema;
+}
+function _superRefine2(fn) {
+  const ch = _check2((payload) => {
+    payload.addIssue = (issue3) => {
+      if (typeof issue3 === "string") {
+        payload.issues.push(issue2(issue3, payload.value, ch._zod.def));
+      } else {
+        const _issue = issue3;
+        if (_issue.fatal)
+          _issue.continue = false;
+        _issue.code ?? (_issue.code = "custom");
+        _issue.input ?? (_issue.input = payload.value);
+        _issue.inst ?? (_issue.inst = ch);
+        _issue.continue ?? (_issue.continue = !ch._zod.def.abort);
+        payload.issues.push(issue2(_issue));
+      }
+    };
+    return fn(payload.value, payload);
+  });
+  return ch;
+}
+function _check2(fn, params) {
+  const ch = new $ZodCheck2({
+    check: "custom",
+    ...normalizeParams2(params)
+  });
+  ch._zod.check = fn;
+  return ch;
+}
+// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/classic/iso.js
+var ZodISODateTime2 = /* @__PURE__ */ $constructor2("ZodISODateTime", (inst, def) => {
+  $ZodISODateTime2.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+function datetime5(params) {
+  return _isoDateTime2(ZodISODateTime2, params);
+}
+var ZodISODate2 = /* @__PURE__ */ $constructor2("ZodISODate", (inst, def) => {
+  $ZodISODate2.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+function date7(params) {
+  return _isoDate2(ZodISODate2, params);
+}
+var ZodISOTime2 = /* @__PURE__ */ $constructor2("ZodISOTime", (inst, def) => {
+  $ZodISOTime2.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+function time5(params) {
+  return _isoTime2(ZodISOTime2, params);
+}
+var ZodISODuration2 = /* @__PURE__ */ $constructor2("ZodISODuration", (inst, def) => {
+  $ZodISODuration2.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+function duration5(params) {
+  return _isoDuration2(ZodISODuration2, params);
+}
+
+// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/classic/errors.js
+var initializer5 = (inst, issues) => {
+  $ZodError2.init(inst, issues);
+  inst.name = "ZodError";
+  Object.defineProperties(inst, {
+    format: {
+      value: (mapper) => formatError2(inst, mapper)
+    },
+    flatten: {
+      value: (mapper) => flattenError2(inst, mapper)
+    },
+    addIssue: {
+      value: (issue3) => {
+        inst.issues.push(issue3);
+        inst.message = JSON.stringify(inst.issues, jsonStringifyReplacer2, 2);
+      }
+    },
+    addIssues: {
+      value: (issues2) => {
+        inst.issues.push(...issues2);
+        inst.message = JSON.stringify(inst.issues, jsonStringifyReplacer2, 2);
+      }
+    },
+    isEmpty: {
+      get() {
+        return inst.issues.length === 0;
+      }
+    }
+  });
+};
+var ZodError2 = $constructor2("ZodError", initializer5);
+var ZodRealError2 = $constructor2("ZodError", initializer5, {
+  Parent: Error
+});
+
+// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/classic/parse.js
+var parse10 = /* @__PURE__ */ _parse2(ZodRealError2);
+var parseAsync5 = /* @__PURE__ */ _parseAsync2(ZodRealError2);
+var safeParse5 = /* @__PURE__ */ _safeParse2(ZodRealError2);
+var safeParseAsync5 = /* @__PURE__ */ _safeParseAsync2(ZodRealError2);
+var encode6 = /* @__PURE__ */ _encode2(ZodRealError2);
+var decode5 = /* @__PURE__ */ _decode2(ZodRealError2);
+var encodeAsync3 = /* @__PURE__ */ _encodeAsync2(ZodRealError2);
+var decodeAsync3 = /* @__PURE__ */ _decodeAsync2(ZodRealError2);
+var safeEncode3 = /* @__PURE__ */ _safeEncode2(ZodRealError2);
+var safeDecode3 = /* @__PURE__ */ _safeDecode2(ZodRealError2);
+var safeEncodeAsync3 = /* @__PURE__ */ _safeEncodeAsync2(ZodRealError2);
+var safeDecodeAsync3 = /* @__PURE__ */ _safeDecodeAsync2(ZodRealError2);
+
+// ../node_modules/.bun/zod@4.1.13/node_modules/zod/v4/classic/schemas.js
+var ZodType2 = /* @__PURE__ */ $constructor2("ZodType", (inst, def) => {
+  $ZodType2.init(inst, def);
+  inst.def = def;
+  inst.type = def.type;
+  Object.defineProperty(inst, "_def", { value: def });
+  inst.check = (...checks2) => {
+    return inst.clone(exports_util2.mergeDefs(def, {
+      checks: [
+        ...def.checks ?? [],
+        ...checks2.map((ch) => typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch)
+      ]
+    }));
+  };
+  inst.clone = (def2, params) => clone2(inst, def2, params);
+  inst.brand = () => inst;
+  inst.register = (reg, meta4) => {
+    reg.add(inst, meta4);
+    return inst;
+  };
+  inst.parse = (data, params) => parse10(inst, data, params, { callee: inst.parse });
+  inst.safeParse = (data, params) => safeParse5(inst, data, params);
+  inst.parseAsync = async (data, params) => parseAsync5(inst, data, params, { callee: inst.parseAsync });
+  inst.safeParseAsync = async (data, params) => safeParseAsync5(inst, data, params);
+  inst.spa = inst.safeParseAsync;
+  inst.encode = (data, params) => encode6(inst, data, params);
+  inst.decode = (data, params) => decode5(inst, data, params);
+  inst.encodeAsync = async (data, params) => encodeAsync3(inst, data, params);
+  inst.decodeAsync = async (data, params) => decodeAsync3(inst, data, params);
+  inst.safeEncode = (data, params) => safeEncode3(inst, data, params);
+  inst.safeDecode = (data, params) => safeDecode3(inst, data, params);
+  inst.safeEncodeAsync = async (data, params) => safeEncodeAsync3(inst, data, params);
+  inst.safeDecodeAsync = async (data, params) => safeDecodeAsync3(inst, data, params);
+  inst.refine = (check2, params) => inst.check(refine2(check2, params));
+  inst.superRefine = (refinement) => inst.check(superRefine2(refinement));
+  inst.overwrite = (fn) => inst.check(_overwrite2(fn));
+  inst.optional = () => optional2(inst);
+  inst.nullable = () => nullable2(inst);
+  inst.nullish = () => optional2(nullable2(inst));
+  inst.nonoptional = (params) => nonoptional2(inst, params);
+  inst.array = () => array2(inst);
+  inst.or = (arg) => union2([inst, arg]);
+  inst.and = (arg) => intersection2(inst, arg);
+  inst.transform = (tx) => pipe2(inst, transform2(tx));
+  inst.default = (def2) => _default3(inst, def2);
+  inst.prefault = (def2) => prefault2(inst, def2);
+  inst.catch = (params) => _catch3(inst, params);
+  inst.pipe = (target) => pipe2(inst, target);
+  inst.readonly = () => readonly2(inst);
+  inst.describe = (description) => {
+    const cl = inst.clone();
+    globalRegistry2.add(cl, { description });
+    return cl;
+  };
+  Object.defineProperty(inst, "description", {
+    get() {
+      return globalRegistry2.get(inst)?.description;
+    },
+    configurable: true
+  });
+  inst.meta = (...args) => {
+    if (args.length === 0) {
+      return globalRegistry2.get(inst);
+    }
+    const cl = inst.clone();
+    globalRegistry2.add(cl, args[0]);
+    return cl;
+  };
+  inst.isOptional = () => inst.safeParse(undefined).success;
+  inst.isNullable = () => inst.safeParse(null).success;
+  return inst;
+});
+var _ZodString2 = /* @__PURE__ */ $constructor2("_ZodString", (inst, def) => {
+  $ZodString2.init(inst, def);
+  ZodType2.init(inst, def);
+  const bag = inst._zod.bag;
+  inst.format = bag.format ?? null;
+  inst.minLength = bag.minimum ?? null;
+  inst.maxLength = bag.maximum ?? null;
+  inst.regex = (...args) => inst.check(_regex2(...args));
+  inst.includes = (...args) => inst.check(_includes2(...args));
+  inst.startsWith = (...args) => inst.check(_startsWith2(...args));
+  inst.endsWith = (...args) => inst.check(_endsWith2(...args));
+  inst.min = (...args) => inst.check(_minLength2(...args));
+  inst.max = (...args) => inst.check(_maxLength2(...args));
+  inst.length = (...args) => inst.check(_length2(...args));
+  inst.nonempty = (...args) => inst.check(_minLength2(1, ...args));
+  inst.lowercase = (params) => inst.check(_lowercase2(params));
+  inst.uppercase = (params) => inst.check(_uppercase2(params));
+  inst.trim = () => inst.check(_trim2());
+  inst.normalize = (...args) => inst.check(_normalize2(...args));
+  inst.toLowerCase = () => inst.check(_toLowerCase2());
+  inst.toUpperCase = () => inst.check(_toUpperCase2());
+  inst.slugify = () => inst.check(_slugify2());
+});
+var ZodString2 = /* @__PURE__ */ $constructor2("ZodString", (inst, def) => {
+  $ZodString2.init(inst, def);
+  _ZodString2.init(inst, def);
+  inst.email = (params) => inst.check(_email2(ZodEmail2, params));
+  inst.url = (params) => inst.check(_url2(ZodURL2, params));
+  inst.jwt = (params) => inst.check(_jwt2(ZodJWT2, params));
+  inst.emoji = (params) => inst.check(_emoji5(ZodEmoji2, params));
+  inst.guid = (params) => inst.check(_guid2(ZodGUID2, params));
+  inst.uuid = (params) => inst.check(_uuid2(ZodUUID2, params));
+  inst.uuidv4 = (params) => inst.check(_uuidv42(ZodUUID2, params));
+  inst.uuidv6 = (params) => inst.check(_uuidv62(ZodUUID2, params));
+  inst.uuidv7 = (params) => inst.check(_uuidv72(ZodUUID2, params));
+  inst.nanoid = (params) => inst.check(_nanoid2(ZodNanoID2, params));
+  inst.guid = (params) => inst.check(_guid2(ZodGUID2, params));
+  inst.cuid = (params) => inst.check(_cuid3(ZodCUID3, params));
+  inst.cuid2 = (params) => inst.check(_cuid22(ZodCUID22, params));
+  inst.ulid = (params) => inst.check(_ulid2(ZodULID2, params));
+  inst.base64 = (params) => inst.check(_base642(ZodBase642, params));
+  inst.base64url = (params) => inst.check(_base64url2(ZodBase64URL2, params));
+  inst.xid = (params) => inst.check(_xid2(ZodXID2, params));
+  inst.ksuid = (params) => inst.check(_ksuid2(ZodKSUID2, params));
+  inst.ipv4 = (params) => inst.check(_ipv42(ZodIPv42, params));
+  inst.ipv6 = (params) => inst.check(_ipv62(ZodIPv62, params));
+  inst.cidrv4 = (params) => inst.check(_cidrv42(ZodCIDRv42, params));
+  inst.cidrv6 = (params) => inst.check(_cidrv62(ZodCIDRv62, params));
+  inst.e164 = (params) => inst.check(_e1642(ZodE1642, params));
+  inst.datetime = (params) => inst.check(datetime5(params));
+  inst.date = (params) => inst.check(date7(params));
+  inst.time = (params) => inst.check(time5(params));
+  inst.duration = (params) => inst.check(duration5(params));
+});
+function string6(params) {
+  return _string2(ZodString2, params);
+}
+var ZodStringFormat2 = /* @__PURE__ */ $constructor2("ZodStringFormat", (inst, def) => {
+  $ZodStringFormat2.init(inst, def);
+  _ZodString2.init(inst, def);
+});
+var ZodEmail2 = /* @__PURE__ */ $constructor2("ZodEmail", (inst, def) => {
+  $ZodEmail2.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodGUID2 = /* @__PURE__ */ $constructor2("ZodGUID", (inst, def) => {
+  $ZodGUID2.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodUUID2 = /* @__PURE__ */ $constructor2("ZodUUID", (inst, def) => {
+  $ZodUUID2.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodURL2 = /* @__PURE__ */ $constructor2("ZodURL", (inst, def) => {
+  $ZodURL2.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodEmoji2 = /* @__PURE__ */ $constructor2("ZodEmoji", (inst, def) => {
+  $ZodEmoji2.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodNanoID2 = /* @__PURE__ */ $constructor2("ZodNanoID", (inst, def) => {
+  $ZodNanoID2.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodCUID3 = /* @__PURE__ */ $constructor2("ZodCUID", (inst, def) => {
+  $ZodCUID3.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodCUID22 = /* @__PURE__ */ $constructor2("ZodCUID2", (inst, def) => {
+  $ZodCUID22.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodULID2 = /* @__PURE__ */ $constructor2("ZodULID", (inst, def) => {
+  $ZodULID2.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodXID2 = /* @__PURE__ */ $constructor2("ZodXID", (inst, def) => {
+  $ZodXID2.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodKSUID2 = /* @__PURE__ */ $constructor2("ZodKSUID", (inst, def) => {
+  $ZodKSUID2.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodIPv42 = /* @__PURE__ */ $constructor2("ZodIPv4", (inst, def) => {
+  $ZodIPv42.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodIPv62 = /* @__PURE__ */ $constructor2("ZodIPv6", (inst, def) => {
+  $ZodIPv62.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodCIDRv42 = /* @__PURE__ */ $constructor2("ZodCIDRv4", (inst, def) => {
+  $ZodCIDRv42.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodCIDRv62 = /* @__PURE__ */ $constructor2("ZodCIDRv6", (inst, def) => {
+  $ZodCIDRv62.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodBase642 = /* @__PURE__ */ $constructor2("ZodBase64", (inst, def) => {
+  $ZodBase642.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodBase64URL2 = /* @__PURE__ */ $constructor2("ZodBase64URL", (inst, def) => {
+  $ZodBase64URL2.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodE1642 = /* @__PURE__ */ $constructor2("ZodE164", (inst, def) => {
+  $ZodE1642.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodJWT2 = /* @__PURE__ */ $constructor2("ZodJWT", (inst, def) => {
+  $ZodJWT2.init(inst, def);
+  ZodStringFormat2.init(inst, def);
+});
+var ZodNumber2 = /* @__PURE__ */ $constructor2("ZodNumber", (inst, def) => {
+  $ZodNumber2.init(inst, def);
+  ZodType2.init(inst, def);
+  inst.gt = (value, params) => inst.check(_gt2(value, params));
+  inst.gte = (value, params) => inst.check(_gte2(value, params));
+  inst.min = (value, params) => inst.check(_gte2(value, params));
+  inst.lt = (value, params) => inst.check(_lt2(value, params));
+  inst.lte = (value, params) => inst.check(_lte2(value, params));
+  inst.max = (value, params) => inst.check(_lte2(value, params));
+  inst.int = (params) => inst.check(int2(params));
+  inst.safe = (params) => inst.check(int2(params));
+  inst.positive = (params) => inst.check(_gt2(0, params));
+  inst.nonnegative = (params) => inst.check(_gte2(0, params));
+  inst.negative = (params) => inst.check(_lt2(0, params));
+  inst.nonpositive = (params) => inst.check(_lte2(0, params));
+  inst.multipleOf = (value, params) => inst.check(_multipleOf2(value, params));
+  inst.step = (value, params) => inst.check(_multipleOf2(value, params));
+  inst.finite = () => inst;
+  const bag = inst._zod.bag;
+  inst.minValue = Math.max(bag.minimum ?? Number.NEGATIVE_INFINITY, bag.exclusiveMinimum ?? Number.NEGATIVE_INFINITY) ?? null;
+  inst.maxValue = Math.min(bag.maximum ?? Number.POSITIVE_INFINITY, bag.exclusiveMaximum ?? Number.POSITIVE_INFINITY) ?? null;
+  inst.isInt = (bag.format ?? "").includes("int") || Number.isSafeInteger(bag.multipleOf ?? 0.5);
+  inst.isFinite = true;
+  inst.format = bag.format ?? null;
+});
+function number6(params) {
+  return _number2(ZodNumber2, params);
+}
+var ZodNumberFormat2 = /* @__PURE__ */ $constructor2("ZodNumberFormat", (inst, def) => {
+  $ZodNumberFormat2.init(inst, def);
+  ZodNumber2.init(inst, def);
+});
+function int2(params) {
+  return _int2(ZodNumberFormat2, params);
+}
+var ZodUnknown2 = /* @__PURE__ */ $constructor2("ZodUnknown", (inst, def) => {
+  $ZodUnknown2.init(inst, def);
+  ZodType2.init(inst, def);
+});
+function unknown2() {
+  return _unknown2(ZodUnknown2);
+}
+var ZodNever2 = /* @__PURE__ */ $constructor2("ZodNever", (inst, def) => {
+  $ZodNever2.init(inst, def);
+  ZodType2.init(inst, def);
+});
+function never2(params) {
+  return _never2(ZodNever2, params);
+}
+var ZodArray2 = /* @__PURE__ */ $constructor2("ZodArray", (inst, def) => {
+  $ZodArray2.init(inst, def);
+  ZodType2.init(inst, def);
+  inst.element = def.element;
+  inst.min = (minLength, params) => inst.check(_minLength2(minLength, params));
+  inst.nonempty = (params) => inst.check(_minLength2(1, params));
+  inst.max = (maxLength, params) => inst.check(_maxLength2(maxLength, params));
+  inst.length = (len, params) => inst.check(_length2(len, params));
+  inst.unwrap = () => inst.element;
+});
+function array2(element, params) {
+  return _array2(ZodArray2, element, params);
+}
+var ZodObject2 = /* @__PURE__ */ $constructor2("ZodObject", (inst, def) => {
+  $ZodObjectJIT2.init(inst, def);
+  ZodType2.init(inst, def);
+  exports_util2.defineLazy(inst, "shape", () => {
+    return def.shape;
+  });
+  inst.keyof = () => _enum3(Object.keys(inst._zod.def.shape));
+  inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall });
+  inst.passthrough = () => inst.clone({ ...inst._zod.def, catchall: unknown2() });
+  inst.loose = () => inst.clone({ ...inst._zod.def, catchall: unknown2() });
+  inst.strict = () => inst.clone({ ...inst._zod.def, catchall: never2() });
+  inst.strip = () => inst.clone({ ...inst._zod.def, catchall: undefined });
+  inst.extend = (incoming) => {
+    return exports_util2.extend(inst, incoming);
+  };
+  inst.safeExtend = (incoming) => {
+    return exports_util2.safeExtend(inst, incoming);
+  };
+  inst.merge = (other) => exports_util2.merge(inst, other);
+  inst.pick = (mask) => exports_util2.pick(inst, mask);
+  inst.omit = (mask) => exports_util2.omit(inst, mask);
+  inst.partial = (...args) => exports_util2.partial(ZodOptional2, inst, args[0]);
+  inst.required = (...args) => exports_util2.required(ZodNonOptional2, inst, args[0]);
+});
+function object2(shape, params) {
+  const def = {
+    type: "object",
+    shape: shape ?? {},
+    ...exports_util2.normalizeParams(params)
+  };
+  return new ZodObject2(def);
+}
+var ZodUnion2 = /* @__PURE__ */ $constructor2("ZodUnion", (inst, def) => {
+  $ZodUnion2.init(inst, def);
+  ZodType2.init(inst, def);
+  inst.options = def.options;
+});
+function union2(options, params) {
+  return new ZodUnion2({
+    type: "union",
+    options,
+    ...exports_util2.normalizeParams(params)
+  });
+}
+var ZodIntersection2 = /* @__PURE__ */ $constructor2("ZodIntersection", (inst, def) => {
+  $ZodIntersection2.init(inst, def);
+  ZodType2.init(inst, def);
+});
+function intersection2(left, right) {
+  return new ZodIntersection2({
+    type: "intersection",
+    left,
+    right
+  });
+}
+var ZodEnum2 = /* @__PURE__ */ $constructor2("ZodEnum", (inst, def) => {
+  $ZodEnum2.init(inst, def);
+  ZodType2.init(inst, def);
+  inst.enum = def.entries;
+  inst.options = Object.values(def.entries);
+  const keys = new Set(Object.keys(def.entries));
+  inst.extract = (values, params) => {
+    const newEntries = {};
+    for (const value of values) {
+      if (keys.has(value)) {
+        newEntries[value] = def.entries[value];
+      } else
+        throw new Error(`Key ${value} not found in enum`);
+    }
+    return new ZodEnum2({
+      ...def,
+      checks: [],
+      ...exports_util2.normalizeParams(params),
+      entries: newEntries
+    });
+  };
+  inst.exclude = (values, params) => {
+    const newEntries = { ...def.entries };
+    for (const value of values) {
+      if (keys.has(value)) {
+        delete newEntries[value];
+      } else
+        throw new Error(`Key ${value} not found in enum`);
+    }
+    return new ZodEnum2({
+      ...def,
+      checks: [],
+      ...exports_util2.normalizeParams(params),
+      entries: newEntries
+    });
+  };
+});
+function _enum3(values, params) {
+  const entries = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;
+  return new ZodEnum2({
+    type: "enum",
+    entries,
+    ...exports_util2.normalizeParams(params)
+  });
+}
+var ZodTransform2 = /* @__PURE__ */ $constructor2("ZodTransform", (inst, def) => {
+  $ZodTransform2.init(inst, def);
+  ZodType2.init(inst, def);
+  inst._zod.parse = (payload, _ctx) => {
+    if (_ctx.direction === "backward") {
+      throw new $ZodEncodeError2(inst.constructor.name);
+    }
+    payload.addIssue = (issue3) => {
+      if (typeof issue3 === "string") {
+        payload.issues.push(exports_util2.issue(issue3, payload.value, def));
+      } else {
+        const _issue = issue3;
+        if (_issue.fatal)
+          _issue.continue = false;
+        _issue.code ?? (_issue.code = "custom");
+        _issue.input ?? (_issue.input = payload.value);
+        _issue.inst ?? (_issue.inst = inst);
+        payload.issues.push(exports_util2.issue(_issue));
+      }
+    };
+    const output = def.transform(payload.value, payload);
+    if (output instanceof Promise) {
+      return output.then((output2) => {
+        payload.value = output2;
+        return payload;
+      });
+    }
+    payload.value = output;
+    return payload;
+  };
+});
+function transform2(fn) {
+  return new ZodTransform2({
+    type: "transform",
+    transform: fn
+  });
+}
+var ZodOptional2 = /* @__PURE__ */ $constructor2("ZodOptional", (inst, def) => {
+  $ZodOptional2.init(inst, def);
+  ZodType2.init(inst, def);
+  inst.unwrap = () => inst._zod.def.innerType;
+});
+function optional2(innerType) {
+  return new ZodOptional2({
+    type: "optional",
+    innerType
+  });
+}
+var ZodNullable2 = /* @__PURE__ */ $constructor2("ZodNullable", (inst, def) => {
+  $ZodNullable2.init(inst, def);
+  ZodType2.init(inst, def);
+  inst.unwrap = () => inst._zod.def.innerType;
+});
+function nullable2(innerType) {
+  return new ZodNullable2({
+    type: "nullable",
+    innerType
+  });
+}
+var ZodDefault2 = /* @__PURE__ */ $constructor2("ZodDefault", (inst, def) => {
+  $ZodDefault2.init(inst, def);
+  ZodType2.init(inst, def);
+  inst.unwrap = () => inst._zod.def.innerType;
+  inst.removeDefault = inst.unwrap;
+});
+function _default3(innerType, defaultValue) {
+  return new ZodDefault2({
+    type: "default",
+    innerType,
+    get defaultValue() {
+      return typeof defaultValue === "function" ? defaultValue() : exports_util2.shallowClone(defaultValue);
+    }
+  });
+}
+var ZodPrefault2 = /* @__PURE__ */ $constructor2("ZodPrefault", (inst, def) => {
+  $ZodPrefault2.init(inst, def);
+  ZodType2.init(inst, def);
+  inst.unwrap = () => inst._zod.def.innerType;
+});
+function prefault2(innerType, defaultValue) {
+  return new ZodPrefault2({
+    type: "prefault",
+    innerType,
+    get defaultValue() {
+      return typeof defaultValue === "function" ? defaultValue() : exports_util2.shallowClone(defaultValue);
+    }
+  });
+}
+var ZodNonOptional2 = /* @__PURE__ */ $constructor2("ZodNonOptional", (inst, def) => {
+  $ZodNonOptional2.init(inst, def);
+  ZodType2.init(inst, def);
+  inst.unwrap = () => inst._zod.def.innerType;
+});
+function nonoptional2(innerType, params) {
+  return new ZodNonOptional2({
+    type: "nonoptional",
+    innerType,
+    ...exports_util2.normalizeParams(params)
+  });
+}
+var ZodCatch2 = /* @__PURE__ */ $constructor2("ZodCatch", (inst, def) => {
+  $ZodCatch2.init(inst, def);
+  ZodType2.init(inst, def);
+  inst.unwrap = () => inst._zod.def.innerType;
+  inst.removeCatch = inst.unwrap;
+});
+function _catch3(innerType, catchValue) {
+  return new ZodCatch2({
+    type: "catch",
+    innerType,
+    catchValue: typeof catchValue === "function" ? catchValue : () => catchValue
+  });
+}
+var ZodPipe2 = /* @__PURE__ */ $constructor2("ZodPipe", (inst, def) => {
+  $ZodPipe2.init(inst, def);
+  ZodType2.init(inst, def);
+  inst.in = def.in;
+  inst.out = def.out;
+});
+function pipe2(in_, out) {
+  return new ZodPipe2({
+    type: "pipe",
+    in: in_,
+    out
+  });
+}
+var ZodReadonly2 = /* @__PURE__ */ $constructor2("ZodReadonly", (inst, def) => {
+  $ZodReadonly2.init(inst, def);
+  ZodType2.init(inst, def);
+  inst.unwrap = () => inst._zod.def.innerType;
+});
+function readonly2(innerType) {
+  return new ZodReadonly2({
+    type: "readonly",
+    innerType
+  });
+}
+var ZodCustom2 = /* @__PURE__ */ $constructor2("ZodCustom", (inst, def) => {
+  $ZodCustom2.init(inst, def);
+  ZodType2.init(inst, def);
+});
+function refine2(fn, _params = {}) {
+  return _refine2(ZodCustom2, fn, _params);
+}
+function superRefine2(fn) {
+  return _superRefine2(fn);
+}
+
+// src/api-client.ts
 var import_http_client = __toESM(require_lib2(), 1);
 var import_auth = __toESM(require_auth2(), 1);
 var RECURSE_BASE_URL = "https://rcade.recurse.com/api/v1";
-var DeploymentIntent = object({
-  upload_url: string2(),
-  expires: number2()
+var DeploymentIntent = object2({
+  upload_url: string6(),
+  expires: number6()
 });
 
 class RCadeDeployClient {

@@ -33,6 +33,7 @@
     },
     "api": {
       "name": "@rcade/api",
+      "version": "0.1.0",
       "dependencies": {
         "semver": "^7.7.3",
       },
@@ -112,7 +113,7 @@
     },
     "plugins/input-classic/typescript": {
       "name": "@rcade/plugin-input-classic",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@rcade/sdk": "0.1.1",
       },

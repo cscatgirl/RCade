@@ -12,9 +12,12 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "prepare": "tsc -p tsconfig.build.json"
+    "build": "bun build index.ts --outdir dist --target node && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "prepare": "bun build index.ts --outdir dist --target node && tsc -p tsconfig.build.json --emitDeclarationOnly"
   },
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@types/bun": "latest",
     "@types/semver": "^7.7.1"

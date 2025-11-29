@@ -1,13 +1,27 @@
 {
   "name": "@rcade/plugin-input-classic",
   "module": "index.ts",
-  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "version": "0.1.1",
   "type": "module",
+  "exports": {
+    ".": {
+      "bun": "./index.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "bun build index.ts --outdir dist --target node",
+    "prepare": "bun build index.ts --outdir dist --target node"
+  },
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@types/bun": "latest"
   },
   "dependencies": {
-    "@rcade/sdk": "0.1.1"
+    "@rcade/sdk": "0.1.2"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
