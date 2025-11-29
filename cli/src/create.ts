@@ -102,8 +102,9 @@ export const createCommand = new Command("create")
         message: "Starting template:",
         choices: [
             { value: "p5-ts", name: "p5.js (TypeScript)" },
-            { value: "vanilla-js", name: "Vanilla (JavaScript)" },
+            { value: "p5-js", name: "p5.js (JavaScript)" },
             { value: "vanilla-ts", name: "Vanilla (TypeScript)" },
+            { value: "vanilla-js", name: "Vanilla (JavaScript)" },
             { value: "vanilla-rs", name: "Vanilla (Rust)" },
         ]
     });
@@ -168,9 +169,10 @@ export const createCommand = new Command("create")
     fs.writeFileSync(path.join(projectDir, "rcade.manifest.json"), JSON.stringify(manifest, undefined, 2));
 
     switch (templateDirectory) {
-        case "vanilla-js": await setup_js(projectDir); break;
-        case "vanilla-ts": await setup_js(projectDir); break;
         case "p5-ts": await setup_js(projectDir); break;
+        case "p5-js": await setup_js(projectDir); break;
+        case "vanilla-ts": await setup_js(projectDir); break;
+        case "vanilla-js": await setup_js(projectDir); break;
         case "vanilla-rs": await setup_rs(projectDir); break;
     }
 });

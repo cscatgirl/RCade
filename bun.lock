@@ -112,7 +112,7 @@
     },
     "plugins/input-classic/typescript": {
       "name": "@rcade/plugin-input-classic",
-      "version": "0.1.2",
+      "version": "0.1.4",
       "dependencies": {
         "@rcade/sdk": "workspace:*",
       },
