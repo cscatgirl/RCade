@@ -10,6 +10,7 @@ let currentRoute = $state<Route>(initialManifest == null ? { page: 'carousel' } 
   page: "game", game: {
     id: undefined,
     name: initialManifest.name,
+    displayName: initialManifest.display_name ?? null,
     latestVersion: initialManifest.version ?? undefined,
     authors: Array.isArray(initialManifest.authors)
       ? initialManifest.authors.map(a => ({ display_name: a.display_name }))

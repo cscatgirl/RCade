@@ -25,6 +25,7 @@ export type Versions = z.infer<typeof VersionsSchema>;
 export interface GameInfo {
   id: string | undefined;
   name: string;
+  displayName: string | null | undefined;
   latestVersion: string | undefined;
   authors: {
     display_name: string,

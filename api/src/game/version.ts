@@ -31,4 +31,8 @@ export class GameVersion {
     public authors(): { display_name: string, recurse_id?: number | null }[] {
         return this.apiResponse.authors;
     }
+
+    public displayName(): string | null | undefined {
+        return this.apiResponse.displayName;
+    }
 }

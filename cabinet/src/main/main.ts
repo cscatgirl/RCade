@@ -304,6 +304,7 @@ app.whenReady().then(async () => {
     return games.map((game: Game) => ({
       id: game.id(),
       name: game.name(),
+      displayName: game.latest().displayName(),
       latestVersion: game.latest().version(),
       contentUrl: game.latest().contentUrl(),
       authors: game.latest().authors().map(a => ({ display_name: a.display_name })),

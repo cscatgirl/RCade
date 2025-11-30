@@ -75,7 +75,7 @@
 <div class="carousel">
   {#if currentGame}
     <div class="game-card">
-      <h1 class="game-name">{currentGame.name}</h1>
+      <h1 class="game-name">{currentGame.displayName ?? currentGame.name}</h1>
       <p class="game-version">v{currentGame.latestVersion}</p>
       {#if currentGame.authors.length > 0}
         <p class="game-authors">by {currentGame.authors.map(a => a.display_name).join(', ')}</p>
