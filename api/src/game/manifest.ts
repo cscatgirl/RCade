@@ -31,7 +31,7 @@ export const Manifest = z.object({
     visibility: z.enum(["public", "internal", "private"]),
     version: ZodSemverUnbranded.optional(),
     authors: z.union([ManifestAuthor, z.array(ManifestAuthor).min(1)]),
-    dependencies: z.array(ManifestDependency),
+    dependencies: z.array(ManifestDependency).optional(),
 });
 
 export type Manifest = z.infer<typeof Manifest>;

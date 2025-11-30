@@ -98,7 +98,7 @@ export class Game {
             recurse_id: author.recurse_id
         })));
 
-        if (manifest.dependencies.length > 0) {
+        if (manifest.dependencies && manifest.dependencies.length > 0) {
             await getDb().insert(gameDependencies).values(manifest.dependencies.map(dependency => ({
                 gameId: this.data.id,
                 gameVersion: version,

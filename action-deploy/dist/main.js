@@ -33835,7 +33835,7 @@ var Manifest = object({
   visibility: _enum2(["public", "internal", "private"]),
   version: ZodSemverUnbranded.optional(),
   authors: union([ManifestAuthor, array(ManifestAuthor).min(1)]),
-  dependencies: array(ManifestDependency)
+  dependencies: array(ManifestDependency).optional()
 });
 var import_semver = __toESM2(require_semver2(), 1);
 var GameAuthorResponse = exports_external.object({
@@ -33886,7 +33886,23 @@ var Manifest2 = object({
   description: string2(),
   visibility: _enum2(["public", "internal", "private"]),
   version: ZodSemverUnbranded2.optional(),
-  authors: union([ManifestAuthor2, array(ManifestAuthor2).min(1)])
+  authors: union([ManifestAuthor2, array(ManifestAuthor2).min(1)]),
+  libraries: array(union([
+    object({
+      language: literal("javascript"),
+      package: object({
+        name: string2(),
+        versions: string2()
+      })
+    }),
+    object({
+      language: literal("rust"),
+      package: object({
+        name: string2(),
+        versions: string2()
+      })
+    })
+  ]))
 });
 
 // src/index.ts
