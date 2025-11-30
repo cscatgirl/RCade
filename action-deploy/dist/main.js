@@ -35042,6 +35042,7 @@ var Manifest2 = object({
   ]))
 });
 var rcade_manifest_default = {
+  $schema: "../../web/static/manifest.schema.json",
   kind: "plugin",
   name: "@rcade/input-classic",
   description: "The classic input control scheme.",

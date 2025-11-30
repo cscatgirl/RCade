@@ -1,4 +1,5 @@
 {
+    "$schema": "../../web/static/manifest.schema.json",
     "kind": "plugin",
     "name": "@rcade/input-classic",
     "description": "The classic input control scheme.",

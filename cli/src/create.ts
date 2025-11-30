@@ -128,6 +128,7 @@ export const createCommand = new Command("create")
     }
 
     const manifest = {
+        $schema: "https://rcade.recurse.com/manifest.schema.json",
         name,
         display_name,
         description,

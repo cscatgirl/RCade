@@ -1,0 +1,239 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rcade.recurse.com/manifest.schema.json",
+  "title": "RCade Manifest",
+  "description": "Schema for RCade game and plugin manifest files (rcade.manifest.json)",
+  "oneOf": [
+    { "$ref": "#/$defs/gameManifest" },
+    { "$ref": "#/$defs/pluginManifest" }
+  ],
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "description": "A semantic version string (e.g., '1.0.0', '2.1.0-beta.1')"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^(@[a-zA-Z0-9_-]+/)?[a-zA-Z0-9_-]+$",
+      "minLength": 1,
+      "description": "A unique identifier, optionally scoped (e.g., 'my-game' or '@rcade/input-classic')"
+    },
+    "visibility": {
+      "type": "string",
+      "enum": ["public", "internal", "private"],
+      "description": "Who can access this game or plugin: 'public' (everyone), 'internal' (Recursers and Hub visitors), 'private' (only you)"
+    },
+    "author": {
+      "type": "object",
+      "properties": {
+        "display_name": {
+          "type": "string",
+          "description": "The author's display name"
+        },
+        "recurse_id": {
+          "type": "integer",
+          "description": "The author's Recurse Center ID (optional)"
+        }
+      },
+      "required": ["display_name"],
+      "additionalProperties": false
+    },
+    "authors": {
+      "oneOf": [
+        { "$ref": "#/$defs/author" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/author" },
+          "minItems": 1
+        }
+      ],
+      "description": "The author(s) of this game or plugin"
+    },
+    "dependency": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the dependency (e.g., '@rcade/input-classic')"
+        },
+        "version": {
+          "$ref": "#/$defs/semver",
+          "description": "The required version of the dependency"
+        }
+      },
+      "required": ["name", "version"],
+      "additionalProperties": false
+    },
+    "categories": {
+      "type": "string",
+      "enum": ["screensaver"],
+      "description": "Category tags for the game"
+    },
+    "gameManifest": {
+      "type": "object",
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "format": "uri-reference",
+          "description": "JSON Schema reference"
+        },
+        "kind": {
+          "type": "string",
+          "const": "game",
+          "description": "The type of manifest (optional for games, defaults to 'game')"
+        },
+        "name": {
+          "$ref": "#/$defs/name",
+          "description": "Unique identifier for the game"
+        },
+        "display_name": {
+          "type": "string",
+          "description": "Human-readable name shown in the UI"
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the game"
+        },
+        "visibility": {
+          "$ref": "#/$defs/visibility"
+        },
+        "version": {
+          "$ref": "#/$defs/semver",
+          "description": "The game version (auto-incremented if omitted)"
+        },
+        "categories": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/categories" },
+          "default": [],
+          "description": "Category tags for the game"
+        },
+        "authors": {
+          "$ref": "#/$defs/authors"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/dependency" },
+          "description": "Plugin dependencies required by this game"
+        },
+        "remix_of": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/name",
+              "description": "Name of the original game this is a remix of"
+            },
+            "version": {
+              "$ref": "#/$defs/semver",
+              "description": "Version of the original game"
+            }
+          },
+          "required": ["name", "version"],
+          "additionalProperties": false,
+          "description": "Reference to the original game if this is a remix"
+        }
+      },
+      "required": ["name", "description", "visibility", "authors"],
+      "additionalProperties": false
+    },
+    "pluginManifest": {
+      "type": "object",
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "format": "uri-reference",
+          "description": "JSON Schema reference"
+        },
+        "kind": {
+          "type": "string",
+          "const": "plugin",
+          "description": "Must be 'plugin' for plugin manifests"
+        },
+        "name": {
+          "$ref": "#/$defs/name",
+          "description": "Unique identifier for the plugin"
+        },
+        "display_name": {
+          "type": "string",
+          "description": "Human-readable name shown in the UI"
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the plugin"
+        },
+        "visibility": {
+          "$ref": "#/$defs/visibility"
+        },
+        "version": {
+          "$ref": "#/$defs/semver",
+          "description": "The plugin version (auto-incremented if omitted)"
+        },
+        "authors": {
+          "$ref": "#/$defs/authors"
+        },
+        "libraries": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "language": {
+                    "type": "string",
+                    "const": "javascript"
+                  },
+                  "package": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "NPM package name"
+                      },
+                      "versions": {
+                        "type": "string",
+                        "description": "Version range (e.g., '0.x.x')"
+                      }
+                    },
+                    "required": ["name", "versions"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["language", "package"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "language": {
+                    "type": "string",
+                    "const": "rust"
+                  },
+                  "package": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Cargo crate name"
+                      },
+                      "versions": {
+                        "type": "string",
+                        "description": "Version range (e.g., '0.x.x')"
+                      }
+                    },
+                    "required": ["name", "versions"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["language", "package"],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "description": "Library packages provided by this plugin for each supported language"
+        }
+      },
+      "required": ["kind", "name", "description", "visibility", "authors", "libraries"],
+      "additionalProperties": false
+    }
+  }
+}
