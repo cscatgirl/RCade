@@ -245,7 +245,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
                 });
             }
 
-            await fetch(`https://api.github.com/repos/rcade-community/${deploymentName}`, {
+            const changeDefaultBranchResponse = await fetch(`https://api.github.com/repos/rcade-community/${deploymentName}`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${await githubToken()}`,
@@ -257,6 +257,11 @@ export const POST: RequestHandler = async ({ params, request }) => {
                     default_branch: `${version}/${primaryBranch}`
                 }),
             });
+
+            // 422 status means repo already exists, which is fine
+            if (!createRepoResponse.ok) {
+                throw new Error(`Failed to change default branch: ${await createRepoResponse.text()}`);
+            }
         } catch (error) {
             return jsonResponse({ error: `Failed to clone your repository. ${error}` }, 500);
         }
