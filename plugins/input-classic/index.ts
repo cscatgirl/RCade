@@ -2,19 +2,19 @@ import { type PluginEnvironment, type Plugin } from "@rcade/sdk-plugin";
 import type { MessagePortMain } from "electron";
 
 const MAP = {
-    "ArrowUp": { type: "button", player: 1, button: "UP" },
-    "ArrowDown": { type: "button", player: 1, button: "DOWN" },
-    "ArrowLeft": { type: "button", player: 1, button: "LEFT" },
-    "ArrowRight": { type: "button", player: 1, button: "RIGHT" },
-    "ControlLeft": { type: "button", player: 1, button: "A" },
-    "AltLeft": { type: "button", player: 1, button: "B" },
+    "KeyW": { type: "button", player: 1, button: "UP" },
+    "KeyS": { type: "button", player: 1, button: "DOWN" },
+    "KeyA": { type: "button", player: 1, button: "LEFT" },
+    "KeyD": { type: "button", player: 1, button: "RIGHT" },
+    "KeyF": { type: "button", player: 1, button: "A" },
+    "KeyG": { type: "button", player: 1, button: "B" },
 
-    "KeyR": { type: "button", player: 2, button: "UP" },
-    "KeyF": { type: "button", player: 2, button: "DOWN" },
-    "KeyD": { type: "button", player: 2, button: "LEFT" },
-    "KeyG": { type: "button", player: 2, button: "RIGHT" },
-    "KeyA": { type: "button", player: 2, button: "A" },
-    "KeyS": { type: "button", player: 2, button: "B" },
+    "KeyI": { type: "button", player: 2, button: "UP" },
+    "KeyK": { type: "button", player: 2, button: "DOWN" },
+    "KeyJ": { type: "button", player: 2, button: "LEFT" },
+    "KeyL": { type: "button", player: 2, button: "RIGHT" },
+    "Semicolon": { type: "button", player: 2, button: "A" },
+    "Quote": { type: "button", player: 2, button: "B" },
 
     "Digit1": { type: "system", player: 0, button: "ONE_PLAYER" },
     "Digit2": { type: "system", player: 0, button: "TWO_PLAYER" },
