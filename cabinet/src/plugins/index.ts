@@ -28,6 +28,13 @@ export class PluginManager {
             return { nonce }
         };
 
+        // Remove any existing handler (e.g., from a previous game that crashed without cleanup)
+        try {
+            wc.ipc.removeHandler("get-plugin-port");
+        } catch {
+            // Handler didn't exist, that's fine
+        }
+
         wc.ipc.handle("get-plugin-port", this.handler);
     }
 
