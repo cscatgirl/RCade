@@ -35033,14 +35033,14 @@ var rcade_manifest_default = {
       language: "javascript",
       package: {
         name: "@rcade/plugin-input-classic",
-        versions: "1.x.x"
+        versions: "0.x.x"
       }
     },
     {
       language: "rust",
       package: {
         name: "rcade-plugin-input-classic",
-        versions: "1.x.x"
+        versions: "0.x.x"
       }
     }
   ]
@@ -38889,9 +38889,9 @@ class PluginDetector {
   }
   generateDependencies(repoPath) {
     const detected = this.detectPlugins(repoPath);
-    return detected.map(({ manifest, matchedPackages }) => ({
+    return detected.map(({ manifest }) => ({
       name: manifest.name,
-      version: matchedPackages[0]?.version ?? manifest.version ?? "1.0.0"
+      version: manifest.version ?? "1.0.0"
     }));
   }
 }

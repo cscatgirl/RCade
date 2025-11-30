@@ -329,9 +329,9 @@ export class PluginDetector {
     generateDependencies(repoPath: string): GameDependency[] {
         const detected = this.detectPlugins(repoPath);
 
-        return detected.map(({ manifest, matchedPackages }) => ({
+        return detected.map(({ manifest }) => ({
             name: manifest.name,
-            version: matchedPackages[0]?.version ?? manifest.version ?? "1.0.0",
+            version: manifest.version ?? "1.0.0",
         }));
     }
 }

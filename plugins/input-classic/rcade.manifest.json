@@ -15,14 +15,14 @@
             "language": "javascript",
             "package": {
                 "name": "@rcade/plugin-input-classic",
-                "versions": "1.x.x"
+                "versions": "0.x.x"
             }
         },
         {
             "language": "rust",
             "package": {
                 "name": "rcade-plugin-input-classic",
-                "versions": "1.x.x"
+                "versions": "0.x.x"
             }
         }
     ]
