@@ -5,10 +5,73 @@ import { GameManifest, PluginManifest } from "@rcade/api";
 import type { RequestHandler } from "@sveltejs/kit";
 import semver from "semver";
 import { ZodError } from "zod";
-import * as jose from "jose";
 import { Plugin } from "$lib/plugin";
+import git from "isomorphic-git";
+import http from 'isomorphic-git/http/web';
+import LightningFS from '@isomorphic-git/lightning-fs';
+import { env } from "$env/dynamic/private";
+import * as jose from 'jose';
+import { createPrivateKey } from "node:crypto";
+import { fs, vol } from 'memfs';
 
 const VALIDATOR = new GithubOIDCValidator();
+
+// Helper function to generate JWT
+async function generateGitHubAppJWT(appId: string, privateKey: string) {
+    const now = Math.floor(Date.now() / 1000);
+
+    const keyObject = createPrivateKey({
+        key: privateKey,
+        format: 'pem',
+        type: 'pkcs1'
+    });
+
+    const pkcs8Key = keyObject.export({
+        format: 'pem',
+        type: 'pkcs8'
+    }) as string;
+
+    const key = await jose.importPKCS8(pkcs8Key, 'RS256');
+
+    return await new jose.SignJWT({})
+        .setProtectedHeader({ alg: 'RS256' })
+        .setIssuedAt(now)
+        .setExpirationTime(now + 600)
+        .setIssuer(appId)
+        .sign(key);
+}
+
+// Get installation access token
+async function getInstallationToken(appId: string, privateKey: string, installationId: string) {
+    const jwt = await generateGitHubAppJWT(appId, privateKey);
+
+    const response = await fetch(
+        `https://api.github.com/app/installations/${installationId}/access_tokens`,
+        {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${jwt}`,
+                'Accept': 'application/vnd.github+json',
+                'X-GitHub-Api-Version': '2022-11-28',
+                'User-Agent': "RCade Community"
+            },
+        }
+    );
+
+    const data = await response.text();
+
+    try {
+        return (JSON.parse(data)).token;
+    } catch (err) {
+        throw new Error(data);
+    }
+}
+
+const GITHUB_TOKEN = await getInstallationToken(
+    env.GITHUB_APP_ID!,
+    env.GITHUB_APP_PRIVATE_KEY!,
+    env.GITHUB_APP_INSTALLATION_ID!
+);
 
 function jsonResponse(body: object, status: number): Response {
     return new Response(JSON.stringify(body), {
@@ -125,6 +188,73 @@ export const POST: RequestHandler = async ({ params, request }) => {
                 }
             }
         }
+
+        const dir = '/repo';
+
+        try {
+            await git.clone({
+                fs,
+                http,
+                dir,
+                url: `https://github.com/${auth.repository}`,
+            });
+
+            const createRepoResponse = await fetch('https://api.github.com/orgs/rcade-community/repos', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                    'Accept': 'application/vnd.github+json',
+                    'X-GitHub-Api-Version': '2022-11-28',
+                    'User-Agent': "RCade Community"
+                },
+                body: JSON.stringify({
+                    name: deploymentName,
+                    private: false, // or true if you want it private
+                    auto_init: false, // important: don't initialize with README
+                }),
+            });
+
+            // 422 status means repo already exists, which is fine
+            if (!createRepoResponse.ok && createRepoResponse.status !== 422) {
+                throw new Error(`Failed to create repository: ${await createRepoResponse.text()}`);
+            }
+
+            await git.addRemote({
+                fs,
+                dir,
+                remote: 'rcade-community',
+                url: `https://github.com/rcade-community/${deploymentName}`,
+            });
+
+            const branches = await git.listBranches({ fs, dir });
+
+            for (const branch of branches.filter(b => b !== 'HEAD')) {
+                const new_branch = `${version}/${branch}`
+
+                await git.renameBranch({
+                    fs,
+                    dir,
+                    oldref: branch,
+                    ref: new_branch,
+                });
+
+                await git.push({
+                    fs,
+                    http,
+                    dir,
+                    remote: 'rcade-community',
+                    ref: new_branch,
+                    onAuth: () => ({
+                        username: 'x-access-token',
+                        password: GITHUB_TOKEN
+                    }),
+                });
+            }
+        } catch (error) {
+            return jsonResponse({ error: `Failed to clone your repository. ${error}` }, 500);
+        }
+
+        vol.reset();
 
         const { upload_url, expires } = await object.publishVersion(version, manifest as any);
 
