@@ -18,14 +18,14 @@ export class PluginManager {
     }
 
     private constructor(private wc: WebContents) {
-        console.log("new PM");
+        this.handler = async (event: Electron.Event, name: string, v: string) => {
+            const nonce = crypto.randomUUID();
 
-        this.handler = async (event: Electron.Event, channel: { name: string, version: string }) => {
-            console.log("PM Handling");
+            const { port, version } = await this.start(name, v);
 
-            const { port, version } = await this.start(channel.name, channel.version);
+            wc.postMessage("plugin-port-ready", { nonce, name, version }, [port])
 
-            return { port, version, name: channel.name }
+            return { nonce }
         };
 
         wc.ipc.handle("get-plugin-port", this.handler);
@@ -64,7 +64,6 @@ export class PluginManager {
     }
 
     public async start(name: string, versionRange: string): Promise<{ port: MessagePortMain, version: string }> {
-        console.log("Starting", { name, versionRange })
         const { plugin, version } = await this.load(name, versionRange);
         const port = new MessageChannelMain();
         const environment = new PluginEnvironment(this.wc, port.port1);
@@ -75,7 +74,7 @@ export class PluginManager {
     }
 
     public destroy() {
-        this.wc.ipc.removeHandler(this.handler);
+        this.wc.ipc.removeHandler("get-plugin-port");
 
         for (let { plugin } of this.loadedPlugins) {
             plugin.stop();
