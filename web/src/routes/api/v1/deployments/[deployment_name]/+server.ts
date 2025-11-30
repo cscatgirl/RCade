@@ -245,6 +245,23 @@ export const POST: RequestHandler = async ({ params, request }) => {
                 });
             }
 
+            const targetBranch = `${version}/${primaryBranch}`;
+            const branchCheckResponse = await fetch(
+                `https://api.github.com/repos/rcade-community/${deploymentName}/branches/${encodeURIComponent(targetBranch)}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${await githubToken()}`,
+                        'Accept': 'application/vnd.github+json',
+                        'X-GitHub-Api-Version': '2022-11-28',
+                        'User-Agent': "RCade Community"
+                    },
+                }
+            );
+
+            if (!branchCheckResponse.ok) {
+                throw new Error(`Branch ${targetBranch} does not exist on GitHub yet. Cannot set as default branch.`);
+            }
+
             const changeDefaultBranchResponse = await fetch(`https://api.github.com/repos/rcade-community/${deploymentName}`, {
                 method: 'PATCH',
                 headers: {
@@ -254,13 +271,31 @@ export const POST: RequestHandler = async ({ params, request }) => {
                     'User-Agent': "RCade Community"
                 },
                 body: JSON.stringify({
-                    default_branch: `${version}/${primaryBranch}`
+                    default_branch: targetBranch
                 }),
             });
 
-            // 422 status means repo already exists, which is fine
             if (!changeDefaultBranchResponse.ok) {
-                throw new Error(`Failed to change default branch: ${await changeDefaultBranchResponse.text()}`);
+                const errorText = await changeDefaultBranchResponse.text();
+                throw new Error(`Failed to change default branch: ${errorText}`);
+            }
+
+            const repoCheckResponse = await fetch(`https://api.github.com/repos/rcade-community/${deploymentName}`, {
+                headers: {
+                    'Authorization': `Bearer ${await githubToken()}`,
+                    'Accept': 'application/vnd.github+json',
+                    'X-GitHub-Api-Version': '2022-11-28',
+                    'User-Agent': "RCade Community"
+                },
+            });
+
+            if (!repoCheckResponse.ok) {
+                throw new Error(`Failed to verify default branch change`);
+            }
+
+            const repoData = await repoCheckResponse.json();
+            if (repoData.default_branch !== targetBranch) {
+                throw new Error(`Default branch was not changed. Expected: ${targetBranch}, Got: ${repoData.default_branch}`);
             }
         } catch (error) {
             return jsonResponse({ error: `Failed to clone your repository. ${error}` }, 500);
