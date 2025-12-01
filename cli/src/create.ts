@@ -106,6 +106,7 @@ export const createCommand = new Command("create")
             { value: "vanilla-ts", name: "Vanilla (TypeScript)" },
             { value: "vanilla-js", name: "Vanilla (JavaScript)" },
             { value: "vanilla-rs", name: "Vanilla (Rust)" },
+            { value: "vanilla-cpp", name: "Vanilla (C/C++)" },
         ]
     });
 
@@ -175,6 +176,7 @@ export const createCommand = new Command("create")
         case "vanilla-ts": await setup_js(projectDir); break;
         case "vanilla-js": await setup_js(projectDir); break;
         case "vanilla-rs": await setup_rs(projectDir); break;
+        case "vanilla-cpp": await setup_cpp(projectDir); break;
     }
 });
 
@@ -252,6 +254,30 @@ async function setup_rs(path: string) {
         {
             name: "Build Trunk project",
             run: "trunk build --release"
+        }
+    ])
+
+    await exc`git init`;
+}
+
+async function setup_cpp(path: string) {
+    const exc = execa({ cwd: path, stdio: "inherit" });
+
+    write_workflow(path, [
+        {
+            name: "Setup Emscripten",
+            uses: "mymindstorm/setup-emsdk@v14",
+            with: {
+                version: "latest"
+            }
+        },
+        {
+            name: "Verify Emscripten installation",
+            run: "emcc --version"
+        },
+        {
+            name: "Build with Emscripten",
+            run: "make build"
         }
     ])
 
