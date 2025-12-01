@@ -21,8 +21,7 @@ async function isRepoPublic(repo: string): Promise<boolean> {
     });
 
     if (!response.ok) {
-        // ff we can't fetch repo info, assume it's private or doesn't exist
-        return false;
+        throw new Error(`Failed to fetch ${repo} to validate publicity`);
     }
 
     const data = await response.json();
@@ -134,8 +133,8 @@ export const POST: RequestHandler = async ({ params, request, platform }) => {
         const owner = auth.repository_owner;
         return jsonResponse({
             error: `Game '${deploymentName}' is already registered to a different repository. ` +
-                   `If you're developing on a fork, rename your game to '${deploymentName}-${owner}' ` +
-                   `in rcade.manifest.json`
+                `If you're developing on a fork, rename your game to '${deploymentName}-${owner}' ` +
+                `in rcade.manifest.json`
         }, 403);
     }
 
