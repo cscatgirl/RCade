@@ -28,17 +28,17 @@ const iconPath = isDev
 // and should stay the default for development.
 const scaleFactor = args.scale ?? (isDev ? 2 : 1);
 
-app.commandLine.appendSwitch('enable-features', 'SharedArrayBuffer');
-
 if (!isDev && process.platform === 'linux') {
   // WebGPU
   app.commandLine.appendSwitch('enable-unsafe-webgpu');
   app.commandLine.appendSwitch('ozone-platform', "x11");
   app.commandLine.appendSwitch('use-angle', 'vulkan');
-  app.commandLine.appendSwitch('enable-features', 'Vulkan,VulkanFromANGLE');
+  app.commandLine.appendSwitch('enable-features', 'Vulkan,VulkanFromANGLE,SharedArrayBuffer');
 
   // Disable Cursor
   app.commandLine.appendSwitch('cursor', 'none');
+} else {
+  app.commandLine.appendSwitch('enable-features', 'SharedArrayBuffer');
 }
 
 const apiClient = Client.new();
