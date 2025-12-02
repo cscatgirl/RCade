@@ -29,6 +29,8 @@ const iconPath = isDev
 const scaleFactor = args.scale ?? (isDev ? 2 : 1);
 
 app.commandLine.appendSwitch('enable-features', 'SharedArrayBuffer');
+app.commandLine.appendSwitch('enable-unsafe-webgpu');
+app.commandLine.appendSwitch('use-vulkan');
 
 // Hide cursor on Linux
 if (process.platform === 'linux') {
