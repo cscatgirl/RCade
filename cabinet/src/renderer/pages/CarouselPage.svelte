@@ -6,6 +6,7 @@
   let games = $state<GameInfo[]>([]);
   let currentIndex = $state(0);
   let unsubscribeMenuKey: (() => void) | undefined;
+  let lastFetchTime = 0;
 
   const currentGame = $derived(games.length > 0 ? games[currentIndex] : null);
 
@@ -19,6 +20,10 @@
   }
 
   async function fetchGames() {
+    const now = Date.now();
+    if (now - lastFetchTime < 1000) return;
+    lastFetchTime = now;
+
     try {
       if (window.rcade) {
         const prevGame = currentGame;
