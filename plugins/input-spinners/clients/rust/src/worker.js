@@ -17,6 +17,11 @@ const PLAYER2_ANGLE = 12;
 const STEP_RESOLUTION = 1024;
 const MAX_DELTA = 1000;
 
+/** Normalize angle to [-π, π] range */
+function normalizeAngle(angle) {
+    return Math.atan2(Math.sin(angle), Math.cos(angle));
+}
+
 function write(offset, value) {
     const cur_lock = lock();
     cur_lock.getDataView()[offset] = value ? 1 : 0;
@@ -63,14 +68,14 @@ function handleMessage(data) {
             const current = readI16(PLAYER1_SPINNER_STEP_DELTA);
             writeI16(PLAYER1_SPINNER_STEP_DELTA, Math.max(-MAX_DELTA, Math.min(MAX_DELTA, current + spinner1_step_delta)));
             const currentAngle = readF32(PLAYER1_ANGLE);
-            writeF32(PLAYER1_ANGLE, currentAngle + (spinner1_step_delta / STEP_RESOLUTION) * 2 * Math.PI);
+            writeF32(PLAYER1_ANGLE, normalizeAngle(currentAngle + (spinner1_step_delta / STEP_RESOLUTION) * 2 * Math.PI));
         }
 
         if (spinner2_step_delta !== 0) {
             const current = readI16(PLAYER2_SPINNER_STEP_DELTA);
             writeI16(PLAYER2_SPINNER_STEP_DELTA, Math.max(-MAX_DELTA, Math.min(MAX_DELTA, current + spinner2_step_delta)));
             const currentAngle = readF32(PLAYER2_ANGLE);
-            writeF32(PLAYER2_ANGLE, currentAngle + (spinner2_step_delta / STEP_RESOLUTION) * 2 * Math.PI);
+            writeF32(PLAYER2_ANGLE, normalizeAngle(currentAngle + (spinner2_step_delta / STEP_RESOLUTION) * 2 * Math.PI));
         }
     }
 

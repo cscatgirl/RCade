@@ -7,6 +7,11 @@ let player2Angle = 0;
 const STEP_RESOLUTION = 1024;
 const MAX_DELTA = 1000;
 
+/** Normalize angle to [-π, π] range */
+function normalizeAngle(angle: number): number {
+    return Math.atan2(Math.sin(angle), Math.cos(angle));
+}
+
 /**
  * Spinner input for Player 1.
  *
@@ -20,7 +25,7 @@ const MAX_DELTA = 1000;
  *    The callback receives the step_delta and step_resolution for that specific event.
  *
  * Convenience:
- * - `angle`: Returns the cumulative angle in radians (updated automatically).
+ * - `angle`: Returns the current angle in radians, normalized to [-π, π].
  * - `reset()`: Resets the angle to 0.
  */
 export const PLAYER_1 = {
@@ -162,13 +167,13 @@ function emit(data: SpinEventData) {
 
             if (spinner1_step_delta !== 0) {
                 player1StepDelta = Math.max(-MAX_DELTA, Math.min(MAX_DELTA, player1StepDelta + spinner1_step_delta));
-                player1Angle += (spinner1_step_delta / STEP_RESOLUTION) * 2 * Math.PI;
+                player1Angle = normalizeAngle(player1Angle + (spinner1_step_delta / STEP_RESOLUTION) * 2 * Math.PI);
                 emit({ player: 1, step_delta: spinner1_step_delta, step_resolution });
             }
 
             if (spinner2_step_delta !== 0) {
                 player2StepDelta = Math.max(-MAX_DELTA, Math.min(MAX_DELTA, player2StepDelta + spinner2_step_delta));
-                player2Angle += (spinner2_step_delta / STEP_RESOLUTION) * 2 * Math.PI;
+                player2Angle = normalizeAngle(player2Angle + (spinner2_step_delta / STEP_RESOLUTION) * 2 * Math.PI);
                 emit({ player: 2, step_delta: spinner2_step_delta, step_resolution });
             }
         }

@@ -24,6 +24,10 @@ export default class InputSpinnersPlugin implements Plugin {
                 // Byte 2-3: Player 2 Spinner step_delta (signed int16, little-endian)
                 // Byte 4-7: Reserved (buttons handled by input-classic)
 
+                if (data.length < 4) {
+                    return;
+                }
+
                 const spinner1_step_delta = data.readInt16LE(0);
                 const spinner2_step_delta = data.readInt16LE(2);
 

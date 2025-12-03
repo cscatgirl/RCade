@@ -55,7 +55,7 @@ impl SpinnerController {
         1024
     }
 
-    /// Returns the cumulative angle in radians for the given player (1 or 2).
+    /// Returns the current angle in radians, normalized to [-π, π], for the given player (1 or 2).
     pub fn angle(&self, player: u8) -> f32 {
         let offset = match player {
             1 => PLAYER1_ANGLE,
