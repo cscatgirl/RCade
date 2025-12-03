@@ -57,6 +57,7 @@
         "@hono/node-server": "^1.13.7",
         "@rcade/api": "workspace:*",
         "@rcade/input-classic": "workspace:*",
+        "@rcade/input-spinners": "workspace:*",
         "@rcade/sdk-plugin": "workspace:*",
         "hono": "^4.6.14",
         "semver": "^7.7.3",
@@ -125,6 +126,32 @@
       "name": "@rcade/input-classic",
       "dependencies": {
         "@rcade/sdk-plugin": "0.1.0",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "electron": "^39.2.4",
+      },
+      "peerDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "plugins/input-classic/clients/typescript": {
+      "name": "@rcade/plugin-input-classic",
+      "version": "0.2.2",
+      "dependencies": {
+        "@rcade/sdk": "^0.2.1",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "plugins/input-spinners": {
+      "name": "@rcade/input-spinners",
+      "dependencies": {
+        "@rcade/sdk-plugin": "0.1.0",
         "node-hid": "^3.1.0",
       },
       "devDependencies": {
@@ -136,9 +163,9 @@
         "typescript": "^5.0.0",
       },
     },
-    "plugins/input-classic/clients/typescript": {
-      "name": "@rcade/plugin-input-classic",
-      "version": "0.2.2",
+    "plugins/input-spinners/clients/typescript": {
+      "name": "@rcade/plugin-input-spinners",
+      "version": "0.1.0",
       "dependencies": {
         "@rcade/sdk": "^0.2.1",
       },
@@ -617,7 +644,11 @@
 
     "@rcade/input-classic": ["@rcade/input-classic@workspace:plugins/input-classic"],
 
+    "@rcade/input-spinners": ["@rcade/input-spinners@workspace:plugins/input-spinners"],
+
     "@rcade/plugin-input-classic": ["@rcade/plugin-input-classic@workspace:plugins/input-classic/clients/typescript"],
+
+    "@rcade/plugin-input-spinners": ["@rcade/plugin-input-spinners@workspace:plugins/input-spinners/clients/typescript"],
 
     "@rcade/runtime": ["@rcade/runtime@workspace:runtime"],
 
